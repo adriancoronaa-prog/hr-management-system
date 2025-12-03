@@ -13,7 +13,21 @@
       "Bash(dir:*)",
       "Bash(del:*)",
       "Bash(powershell -Command \"$env:USE_SQLITE=''True''; python manage.py migrate\")",
-      "Bash(cmd /c del \"C:\\Users\\adria\\Downloads\\Programa de RRHH - Grupo CA\\backend\\run_migrations.py\")"
+      "Bash(cmd /c del \"C:\\Users\\adria\\Downloads\\Programa de RRHH - Grupo CA\\backend\\run_migrations.py\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(prestaciones): agregar acciones IA para gestion de prestaciones\n\n- 8 nuevas acciones IA (70-77):\n  - ver_catalogo_prestaciones: muestra catalogo de 33 tipos\n  - ver_planes_prestaciones: lista planes de la empresa\n  - crear_plan_prestaciones: crea nuevo plan\n  - agregar_prestacion_plan: agrega prestacion a plan\n  - ver_prestaciones_empleado: muestra prestaciones de empleado\n  - ver_mis_prestaciones: empleado ve sus prestaciones\n  - asignar_plan_empleado: asigna plan a empleado\n  - crear_ajuste_individual: ajustes personalizados\n\n- Total acciones IA: 77\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(powershell -Command \"$env:USE_SQLITE=''True''; cd ''C:\\Users\\adria\\Downloads\\Programa de RRHH - Grupo CA\\backend''; python manage.py migrate contratos\")",
+      "Bash(cmd /c \"cd C:\\Users\\adria\\Downloads\\Programa de RRHH - Grupo CA\\backend && set USE_SQLITE=True && python manage.py migrate contratos\")",
+      "Bash(git commit:*)",
+      "Bash(findstr:*)",
+      "Bash(pip show:*)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

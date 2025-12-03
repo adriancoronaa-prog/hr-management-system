@@ -12,8 +12,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# lib/ - Commented out to not ignore frontend/src/lib
+# lib64/
 parts/
 sdist/
 var/
@@ -125,3 +125,16 @@ cover/
 # =================================
 .vercel
 .netlify
+
+# =================================
+# Claude Code
+# =================================
+.claude/
+*/.claude/
+
+# =================================
+# Temp files
+# =================================
+nul
+*.tmp
+*.temp
