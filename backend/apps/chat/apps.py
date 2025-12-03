@@ -12,10 +12,12 @@ class ChatConfig(AppConfig):
             # Importar y registrar acciones de cada módulo
             from apps.empleados.acciones_ia import registrar_acciones as reg_empleados
             from apps.reportes.acciones_ia import registrar_acciones as reg_reportes
-            
+            from .acciones_documentos import registrar_acciones_documentos
+
             reg_empleados()
             reg_reportes()
-            
+            registrar_acciones_documentos()
+
             print("[OK] Acciones de IA registradas correctamente")
         except Exception as e:
             print(f"[WARN] Error registrando acciones de IA: {e}")

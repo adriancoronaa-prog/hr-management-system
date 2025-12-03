@@ -84,10 +84,46 @@ IMPORTANTE SOBRE PARÁMETROS:
 - NO ejecutes "buscar_empleado" antes de otras acciones si ya tienes el nombre
 
 IMPORTANTE SOBRE ARCHIVOS:
-- Cuando el usuario suba un archivo durante un flujo, agradece y confirma qué tipo detectaste
-- Ejemplo: "✅ Recibí la carta de renuncia de Juan. La he guardado en su expediente."
-- Si no puedes leer el contenido, indícalo pero guarda el archivo igual
-- Ofrece subir más documentos si el expediente está incompleto
+- Cuando el usuario suba un archivo durante un flujo, agradece y confirma que tipo detectaste
+- Ejemplo: "Recibi la carta de renuncia de Juan. La he guardado en su expediente."
+- Si no puedes leer el contenido, indicalo pero guarda el archivo igual
+- Ofrece subir mas documentos si el expediente esta incompleto
+
+ANALISIS DE IMAGENES (Vision):
+Cuando recibas una imagen de documento mexicano, extrae TODA la informacion visible:
+
+Para INE/IFE:
+- Nombre completo (nombre, apellido paterno, apellido materno)
+- CURP
+- Clave de elector
+- Fecha de nacimiento
+- Sexo
+- Domicilio completo
+- Vigencia
+
+Para Constancia RFC (SAT):
+- RFC completo
+- Nombre o razon social
+- Regimen fiscal
+- Codigo postal
+- Fecha de inscripcion
+
+Para Comprobante de domicilio:
+- Nombre del titular
+- Direccion completa (calle, numero, colonia, CP, ciudad, estado)
+- Fecha del comprobante
+- Tipo de servicio
+
+Para NSS/IMSS:
+- Numero de Seguro Social (11 digitos)
+- Nombre del asegurado
+- CURP
+
+Para cualquier otro documento:
+- Extrae todos los datos visibles de forma estructurada
+- Indica el tipo de documento identificado
+
+Despues de extraer, ofrece guardar los datos en el sistema si corresponde a un empleado.
 
 FORMATO DE RESPUESTA PARA ACCIONES:
 Cuando detectes que el usuario quiere realizar una acción, incluye un bloque JSON:
@@ -124,7 +160,7 @@ class AsistenteRRHH:
 
         inicio = time.time()
 
-        # Obtener o crear conversación
+        # Obtener o crear conversacion
         if conversacion_id:
             try:
                 conversacion = Conversacion.objects.get(pk=conversacion_id, usuario=self.usuario)
@@ -136,6 +172,8 @@ class AsistenteRRHH:
         # Procesar archivo si existe
         archivo_info = None
         contenido_archivo = ""
+        imagen_base64 = None
+        imagen_media_type = None
 
         if archivo:
             resultado_archivo = ProcesadorArchivoChat.procesar(archivo)
@@ -148,6 +186,10 @@ class AsistenteRRHH:
 
             archivo_info = resultado_archivo
 
+            # Si es imagen, preparar para Vision
+            if archivo_info.get('es_imagen'):
+                imagen_base64, imagen_media_type = ProcesadorArchivoChat.imagen_bytes_a_base64(archivo)
+
         # Guardar mensaje del usuario
         mensaje_usuario = Mensaje.objects.create(
             conversacion=conversacion,
@@ -158,24 +200,30 @@ class AsistenteRRHH:
             tipo_archivo=archivo_info['tipo'] if archivo_info else '',
         )
 
-        # Extraer texto del archivo después de guardar
-        if archivo and mensaje_usuario.archivo_adjunto:
+        # Extraer texto del archivo despues de guardar (solo para no-imagenes)
+        if archivo and mensaje_usuario.archivo_adjunto and not archivo_info.get('es_imagen'):
             try:
                 contenido_archivo = ProcesadorArchivoChat.extraer_texto(
                     mensaje_usuario.archivo_adjunto.path,
                     archivo_info['tipo']
                 )
-                mensaje_usuario.archivo_contenido_texto = contenido_archivo[:10000]  # Limitar
+                mensaje_usuario.archivo_contenido_texto = contenido_archivo[:10000]
                 mensaje_usuario.save()
             except Exception as e:
                 print(f"Error extrayendo texto: {e}")
 
-        # Incluir información del archivo en el contexto para la IA
+        # Incluir informacion del archivo en el contexto para la IA
         mensaje_para_ia = mensaje
         if archivo_info:
-            mensaje_para_ia += f"\n\n[ARCHIVO ADJUNTO: {archivo_info['nombre']} ({archivo_info['tipo']})]"
-            if contenido_archivo:
-                mensaje_para_ia += f"\n[CONTENIDO DEL ARCHIVO:]\n{contenido_archivo[:3000]}"
+            if archivo_info.get('es_imagen'):
+                # Para imagenes, indicar que se esta enviando imagen
+                if not mensaje.strip():
+                    mensaje_para_ia = "Analiza esta imagen y extrae toda la informacion relevante (nombres, fechas, numeros, direcciones, etc.)"
+                mensaje_para_ia += f"\n\n[IMAGEN ADJUNTA: {archivo_info['nombre']}]"
+            else:
+                mensaje_para_ia += f"\n\n[ARCHIVO ADJUNTO: {archivo_info['nombre']} ({archivo_info['tipo']})]"
+                if contenido_archivo:
+                    mensaje_para_ia += f"\n[CONTENIDO DEL ARCHIVO:]\n{contenido_archivo[:3000]}"
 
         # Si hay empleado en contexto y archivo, asociar al expediente
         if archivo and conversacion.empleado_contexto:
@@ -186,12 +234,17 @@ class AsistenteRRHH:
                 mensaje_usuario,
                 conversacion.flujo_activo
             )
-        
+
         # Construir contexto
         contexto = self._construir_contexto(conversacion)
 
-        # Llamar a Claude API
-        respuesta_ia = self._llamar_claude(mensaje_para_ia, contexto)
+        # Llamar a Claude API (con imagen si es el caso)
+        respuesta_ia = self._llamar_claude(
+            mensaje_para_ia,
+            contexto,
+            imagen_base64=imagen_base64,
+            imagen_media_type=imagen_media_type
+        )
         
         # Parsear respuesta para detectar acciones
         texto_respuesta, accion = self._parsear_respuesta(respuesta_ia)
@@ -287,12 +340,34 @@ class AsistenteRRHH:
         
         return "\n".join(partes)
     
-    def _llamar_claude(self, mensaje: str, contexto: str) -> str:
-        """Llama a la API de Claude de forma síncrona"""
+    def _llamar_claude(self, mensaje: str, contexto: str,
+                        imagen_base64: str = None, imagen_media_type: str = None) -> str:
+        """Llama a la API de Claude de forma sincrona, opcionalmente con imagen (Vision)"""
         if not self.api_key:
             return "Error: API key de Anthropic no configurada. Contacta al administrador."
-        
+
         try:
+            # Construir contenido del mensaje
+            if imagen_base64 and imagen_media_type:
+                # Mensaje con imagen (Vision)
+                content = [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": imagen_media_type,
+                            "data": imagen_base64
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": mensaje
+                    }
+                ]
+            else:
+                # Mensaje solo texto
+                content = mensaje
+
             with httpx.Client(timeout=60.0) as client:
                 response = client.post(
                     "https://api.anthropic.com/v1/messages",
@@ -305,20 +380,20 @@ class AsistenteRRHH:
                         "model": self.modelo,
                         "max_tokens": 4096,
                         "system": SYSTEM_PROMPT_BASE + f"\n\nCONTEXTO ACTUAL:\n{contexto}",
-                        "messages": [{"role": "user", "content": mensaje}]
+                        "messages": [{"role": "user", "content": content}]
                     }
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     return data['content'][0]['text']
                 else:
                     return f"Error al comunicar con IA: {response.status_code} - {response.text}"
-        
+
         except httpx.TimeoutException:
-            return "Error: La solicitud tardó demasiado. Intenta de nuevo."
+            return "Error: La solicitud tardo demasiado. Intenta de nuevo."
         except Exception as e:
-            return f"Error de conexión con IA: {str(e)}"
+            return f"Error de conexion con IA: {str(e)}"
     
     def _parsear_respuesta(self, respuesta: str) -> Tuple[str, Optional[Dict]]:
         """Extrae texto y acción de la respuesta"""

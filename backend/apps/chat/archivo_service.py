@@ -2,8 +2,15 @@
 Servicio para procesar archivos adjuntos en el chat
 """
 import os
+import base64
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 from django.core.files.uploadedfile import UploadedFile
+
+
+# Tipos de imagen soportados por Claude Vision
+TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+EXTENSIONES_IMAGEN = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 
 
 class ProcesadorArchivoChat:
@@ -14,9 +21,12 @@ class ProcesadorArchivoChat:
         'jpg': ['image/jpeg'],
         'jpeg': ['image/jpeg'],
         'png': ['image/png'],
+        'gif': ['image/gif'],
+        'webp': ['image/webp'],
         'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
         'doc': ['application/msword'],
         'txt': ['text/plain'],
+        'csv': ['text/csv'],
     }
 
     MAX_SIZE_MB = 10
@@ -96,12 +106,72 @@ class ProcesadorArchivoChat:
         nombre = archivo.name
         extension = nombre.split('.')[-1].lower() if '.' in nombre else 'bin'
 
+        # Determinar si es imagen
+        es_imagen = extension in ['jpg', 'jpeg', 'png', 'gif', 'webp']
+
         return {
             'success': True,
             'nombre': nombre,
             'tipo': extension,
             'tamaño': archivo.size,
+            'es_imagen': es_imagen,
+            'content_type': getattr(archivo, 'content_type', None),
         }
+
+    @classmethod
+    def imagen_a_base64(cls, ruta_archivo: str) -> Tuple[str, str]:
+        """
+        Convierte una imagen a base64 para enviar a Claude Vision.
+        Retorna (base64_string, media_type)
+        """
+        ruta = Path(ruta_archivo)
+
+        # Determinar media type
+        extension = ruta.suffix.lower()
+        media_types = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+        }
+        media_type = media_types.get(extension, 'image/jpeg')
+
+        # Leer y convertir a base64
+        with open(ruta_archivo, 'rb') as f:
+            imagen_bytes = f.read()
+
+        base64_string = base64.b64encode(imagen_bytes).decode('utf-8')
+
+        return base64_string, media_type
+
+    @classmethod
+    def imagen_bytes_a_base64(cls, archivo: UploadedFile) -> Tuple[str, str]:
+        """
+        Convierte imagen desde UploadedFile a base64.
+        Retorna (base64_string, media_type)
+        """
+        # Determinar media type
+        nombre = archivo.name.lower()
+        extension = '.' + nombre.split('.')[-1] if '.' in nombre else '.jpg'
+
+        media_types = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+        }
+        media_type = media_types.get(extension, 'image/jpeg')
+
+        # Leer y convertir a base64
+        archivo.seek(0)
+        imagen_bytes = archivo.read()
+        archivo.seek(0)  # Reset para uso posterior
+
+        base64_string = base64.b64encode(imagen_bytes).decode('utf-8')
+
+        return base64_string, media_type
 
     @classmethod
     def detectar_tipo_documento(cls, nombre_archivo: str, contenido: str, contexto_flujo: str = '') -> str:
