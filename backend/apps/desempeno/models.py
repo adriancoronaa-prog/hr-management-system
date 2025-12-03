@@ -249,12 +249,35 @@ class Evaluacion(BaseModel, AuditMixin):
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.BORRADOR)
     fecha_envio = models.DateTimeField(null=True, blank=True)
     fecha_aceptacion = models.DateTimeField(null=True, blank=True)
-    
+
     # Firmas
     firmado_evaluador = models.BooleanField(default=False)
     firmado_empleado = models.BooleanField(default=False)
     fecha_firma_evaluador = models.DateTimeField(null=True, blank=True)
     fecha_firma_empleado = models.DateTimeField(null=True, blank=True)
+
+    # Tipo de evaluación (90, 180, 360)
+    modalidad = models.CharField(max_length=20, default='90',
+        help_text='90=solo jefe, 180=jefe+auto, 360=todos')
+    incluye_autoevaluacion = models.BooleanField(default=False)
+    incluye_pares = models.BooleanField(default=False)
+    incluye_subordinados = models.BooleanField(default=False)
+
+    # Autoevaluación
+    autoevaluacion_puntuacion = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True)
+    autoevaluacion_comentarios = models.TextField(blank=True)
+    autoevaluacion_fecha = models.DateTimeField(null=True, blank=True)
+
+    # Clasificación 9-Box (Matriz de Talento)
+    clasificacion_desempeno = models.CharField(max_length=10, blank=True,
+        help_text='bajo/medio/alto')
+    clasificacion_potencial = models.CharField(max_length=10, blank=True,
+        help_text='bajo/medio/alto')
+
+    # Comparativa
+    ranking_departamento = models.PositiveIntegerField(null=True, blank=True)
+    percentil = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'desempeno_evaluaciones'
@@ -294,12 +317,186 @@ class Evaluacion(BaseModel, AuditMixin):
         """Calcula la puntuación final combinando KPIs y competencias"""
         if self.puntuacion_kpis is None:
             return self.puntuacion_competencias
-        
+
         if self.puntuacion_competencias is None:
             return self.puntuacion_kpis
-        
+
         return round(
             (float(self.puntuacion_kpis) * peso_kpis / 100) +
             (float(self.puntuacion_competencias) * peso_competencias / 100),
             2
         )
+
+    @property
+    def clasificacion_9box(self):
+        """Retorna la clasificación 9-box"""
+        if not self.clasificacion_desempeno or not self.clasificacion_potencial:
+            return None
+
+        matriz = {
+            ('alto', 'alto'): 'Estrella',
+            ('alto', 'medio'): 'Alto Desempeno',
+            ('alto', 'bajo'): 'Experto Tecnico',
+            ('medio', 'alto'): 'Futuro Lider',
+            ('medio', 'medio'): 'Colaborador Clave',
+            ('medio', 'bajo'): 'Efectivo',
+            ('bajo', 'alto'): 'Enigma',
+            ('bajo', 'medio'): 'En Desarrollo',
+            ('bajo', 'bajo'): 'Accion Requerida',
+        }
+        return matriz.get((self.clasificacion_desempeno, self.clasificacion_potencial))
+
+    def calcular_promedio_competencias(self):
+        """Calcula el promedio de competencias evaluadas"""
+        competencias = self.competencias_evaluadas.filter(nivel_obtenido__isnull=False)
+        if not competencias.exists():
+            return None
+
+        total = sum(c.nivel_obtenido for c in competencias)
+        promedio = (total / competencias.count()) * 20  # Convertir 1-5 a 0-100
+        return round(promedio, 2)
+
+    def obtener_brechas_competencias(self):
+        """Retorna competencias con brecha negativa (a mejorar)"""
+        return self.competencias_evaluadas.filter(
+            nivel_obtenido__isnull=False,
+            nivel_obtenido__lt=models.F('nivel_esperado')
+        ).select_related('competencia')
+
+
+# ============================================================
+# CATÁLOGO DE COMPETENCIAS
+# ============================================================
+
+class CatalogoCompetencia(BaseModel, AuditMixin):
+    """Catalogo de competencias evaluables"""
+
+    class Categoria(models.TextChoices):
+        LIDERAZGO = 'liderazgo', 'Liderazgo'
+        COMUNICACION = 'comunicacion', 'Comunicacion'
+        TRABAJO_EQUIPO = 'trabajo_equipo', 'Trabajo en Equipo'
+        ORIENTACION_RESULTADOS = 'resultados', 'Orientacion a Resultados'
+        INNOVACION = 'innovacion', 'Innovacion y Creatividad'
+        ADAPTABILIDAD = 'adaptabilidad', 'Adaptabilidad'
+        TECNICA = 'tecnica', 'Competencia Tecnica'
+        SERVICIO = 'servicio', 'Servicio al Cliente'
+        ETICA = 'etica', 'Etica e Integridad'
+        OTRO = 'otro', 'Otro'
+
+    empresa = models.ForeignKey(
+        'empresas.Empresa', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='catalogo_competencias',
+        help_text='Si es nulo, es global'
+    )
+
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    categoria = models.CharField(max_length=20, choices=Categoria.choices)
+
+    # Niveles de dominio con descripciones
+    nivel_1_descripcion = models.TextField(blank=True, help_text='Basico/En desarrollo')
+    nivel_2_descripcion = models.TextField(blank=True, help_text='Competente')
+    nivel_3_descripcion = models.TextField(blank=True, help_text='Avanzado')
+    nivel_4_descripcion = models.TextField(blank=True, help_text='Experto')
+    nivel_5_descripcion = models.TextField(blank=True, help_text='Referente/Mentor')
+
+    # A quien aplica
+    aplica_a_puestos = models.JSONField(default=list, blank=True)
+    aplica_a_niveles = models.JSONField(default=list, blank=True, help_text='Niveles jerarquicos')
+    es_obligatoria = models.BooleanField(default=False)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'desempeno_catalogo_competencias'
+        ordering = ['categoria', 'nombre']
+        verbose_name = 'Competencia'
+        verbose_name_plural = 'Catalogo de Competencias'
+
+    def __str__(self):
+        return f"{self.nombre} ({self.get_categoria_display()})"
+
+
+class EvaluacionCompetencia(BaseModel):
+    """Evaluacion de una competencia especifica dentro de una evaluacion"""
+
+    evaluacion = models.ForeignKey(
+        Evaluacion, on_delete=models.CASCADE, related_name='competencias_evaluadas'
+    )
+    competencia = models.ForeignKey(
+        CatalogoCompetencia, on_delete=models.PROTECT, related_name='evaluaciones'
+    )
+
+    # Calificacion 1-5
+    nivel_esperado = models.PositiveSmallIntegerField(default=3, help_text='Nivel esperado 1-5')
+    nivel_obtenido = models.PositiveSmallIntegerField(null=True, blank=True, help_text='Nivel logrado 1-5')
+
+    comentarios = models.TextField(blank=True)
+    ejemplos_conducta = models.TextField(blank=True, help_text='Ejemplos observados')
+
+    # Para evaluacion 360
+    evaluador_tipo = models.CharField(max_length=20, blank=True,
+        help_text='jefe/par/subordinado/autoevaluacion')
+    evaluador = models.ForeignKey(
+        'empleados.Empleado', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='competencias_evaluadas_a_otros'
+    )
+
+    class Meta:
+        db_table = 'desempeno_evaluacion_competencias'
+        verbose_name = 'Evaluacion de Competencia'
+        verbose_name_plural = 'Evaluaciones de Competencias'
+
+    def __str__(self):
+        return f"{self.competencia.nombre}: {self.nivel_obtenido or 'Pendiente'}"
+
+    @property
+    def brecha(self):
+        """Diferencia entre nivel esperado y obtenido"""
+        if self.nivel_obtenido is None:
+            return None
+        return self.nivel_obtenido - self.nivel_esperado
+
+
+class RetroalimentacionContinua(BaseModel):
+    """Feedback continuo fuera de evaluaciones formales"""
+
+    class Tipo(models.TextChoices):
+        RECONOCIMIENTO = 'reconocimiento', 'Reconocimiento'
+        MEJORA = 'mejora', 'Area de Mejora'
+        COACHING = 'coaching', 'Coaching'
+        OBJETIVO = 'objetivo', 'Seguimiento de Objetivo'
+        GENERAL = 'general', 'General'
+
+    empleado = models.ForeignKey(
+        'empleados.Empleado', on_delete=models.CASCADE, related_name='retroalimentaciones'
+    )
+    autor = models.ForeignKey(
+        'empleados.Empleado', on_delete=models.SET_NULL, null=True,
+        related_name='retroalimentaciones_dadas'
+    )
+
+    tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    contenido = models.TextField()
+    es_privado = models.BooleanField(default=False, help_text='Solo visible para RRHH y jefe')
+
+    # Puede vincularse a una competencia o KPI
+    competencia = models.ForeignKey(
+        CatalogoCompetencia, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    kpi = models.ForeignKey(
+        AsignacionKPI, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    # Seguimiento
+    requiere_seguimiento = models.BooleanField(default=False)
+    seguimiento_completado = models.BooleanField(default=False)
+    fecha_seguimiento = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'desempeno_retroalimentacion'
+        ordering = ['-created_at']
+        verbose_name = 'Retroalimentacion'
+        verbose_name_plural = 'Retroalimentaciones'
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} para {self.empleado.nombre_completo}"
