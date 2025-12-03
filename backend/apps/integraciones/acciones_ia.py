@@ -100,6 +100,18 @@ def registrar_acciones():
         funcion=accion_historial_objeto
     )
 
+    # ============================================================
+    # ACCION 93: Autorizar Google Calendar
+    # ============================================================
+    registrar_accion(
+        nombre='autorizar_google_calendar',
+        descripcion='Genera la URL para autorizar acceso a Google Calendar de la empresa',
+        permisos=['es_admin', 'es_rrhh'],
+        parametros={},
+        ejemplo='Autorizar Google Calendar',
+        funcion=accion_autorizar_google_calendar
+    )
+
     print("[OK] Acciones de Integraciones registradas")
 
 
@@ -379,3 +391,48 @@ def accion_historial_objeto(usuario, params: Dict, contexto: Dict) -> Dict:
             'total': len(lista)
         }
     }
+
+
+def accion_autorizar_google_calendar(usuario, params: Dict, contexto: Dict) -> Dict:
+    """Genera URL para autorizar Google Calendar"""
+    from django.conf import settings
+    from .google_calendar import GoogleCalendarService
+
+    empresa = contexto.get('empresa_contexto')
+    if not empresa:
+        return {'success': False, 'error': 'No hay empresa en contexto'}
+
+    # Verificar si ya esta autorizado
+    try:
+        config = empresa.config_google_calendar
+        if config.credentials_json and config.activo:
+            return {
+                'success': True,
+                'mensaje': 'Google Calendar ya esta autorizado para esta empresa. Usa "sincronizar calendario" para sincronizar eventos.',
+                'datos': {'ya_autorizado': True}
+            }
+    except:
+        pass
+
+    if not settings.GOOGLE_CLIENT_ID:
+        return {
+            'success': False,
+            'error': 'Las credenciales de Google no estan configuradas en el servidor.'
+        }
+
+    try:
+        auth_url = GoogleCalendarService.obtener_url_autorizacion(
+            empresa_id=str(empresa.id),
+            redirect_uri=settings.GOOGLE_REDIRECT_URI
+        )
+
+        return {
+            'success': True,
+            'mensaje': f'Para conectar Google Calendar, abre esta URL en tu navegador:\n\n{auth_url}\n\nDespues de autorizar, podras sincronizar vacaciones, cumpleanos y aniversarios automaticamente.',
+            'datos': {
+                'auth_url': auth_url,
+                'requiere_navegador': True
+            }
+        }
+    except Exception as e:
+        return {'success': False, 'error': f'Error generando URL: {str(e)}'}

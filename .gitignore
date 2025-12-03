@@ -51,6 +51,7 @@ staticfiles/
 *.pem
 *.key
 secrets.json
+client_secret*.json
 
 # =================================
 # Node / React Frontend

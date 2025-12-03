@@ -180,6 +180,22 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 # ========================================
 # GOOGLE CALENDAR CONFIGURATION
 # ========================================
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
-GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/integraciones/google/callback/')
+import json
+
+# Cargar credenciales desde archivo JSON de Google
+GOOGLE_CREDENTIALS_FILE = BASE_DIR / 'backend' / 'client_secret_470031425940-dfhf98q2qdn4ud5v0q8td7vo7d9poabt.apps.googleusercontent.com.json'
+
+if GOOGLE_CREDENTIALS_FILE.exists():
+    with open(GOOGLE_CREDENTIALS_FILE) as f:
+        _google_creds = json.load(f)
+        _web_creds = _google_creds.get('web', _google_creds.get('installed', {}))
+        GOOGLE_CLIENT_ID = _web_creds.get('client_id', '')
+        GOOGLE_CLIENT_SECRET = _web_creds.get('client_secret', '')
+else:
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+
+GOOGLE_REDIRECT_URI = os.getenv(
+    'GOOGLE_REDIRECT_URI',
+    'http://localhost:8000/api/integraciones/google/callback/'
+)
