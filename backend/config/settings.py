@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
+    'drf_spectacular_sidecar',
     # Local apps
     'apps.core',
     'apps.usuarios',
@@ -147,11 +148,78 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# Spectacular (API Docs)
+# ========================================
+# API DOCUMENTATION (Swagger/OpenAPI)
+# ========================================
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'RRHH Multi-empresa API',
-    'DESCRIPTION': 'API para gestión de recursos humanos',
+    'TITLE': 'Sistema RRHH API',
+    'DESCRIPTION': '''
+## API del Sistema de Recursos Humanos
+
+Sistema integral para gestión de RRHH de empresas mexicanas.
+
+### Módulos disponibles:
+
+- **Usuarios**: Autenticación, perfiles, roles
+- **Empresas**: Gestión multi-empresa
+- **Empleados**: Expedientes digitales, documentos
+- **Contratos**: Laborales con renovaciones y adendas
+- **Vacaciones**: Cálculo según Ley Federal del Trabajo
+- **Prestaciones**: Planes y beneficios adicionales
+- **Nómina**: Cálculo ISR, IMSS, percepciones/deducciones
+- **Desempeño**: KPIs, evaluaciones 360°, matriz 9-box
+- **Chat IA**: 93+ acciones disponibles via lenguaje natural
+- **Integraciones**: Google Calendar, bancos
+- **Reportes**: Excel, PDF
+
+### Autenticación
+
+Usar JWT Bearer token en el header:
+```
+Authorization: Bearer <access_token>
+```
+
+Obtener token en `/api/token/` con email y password.
+Refrescar token en `/api/token/refresh/`.
+
+### Validaciones Fiscales
+
+El sistema valida documentos fiscales mexicanos:
+- **RFC**: Persona física (13 chars) y moral (12 chars)
+- **CURP**: 18 caracteres con entidad federativa
+- **NSS**: 11 dígitos con dígito verificador IMSS
+- **CLABE**: 18 dígitos bancarios
+''',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api/',
+    'TAGS': [
+        {'name': 'auth', 'description': 'Autenticación JWT'},
+        {'name': 'usuarios', 'description': 'Gestión de usuarios y perfiles'},
+        {'name': 'empresas', 'description': 'Administración de empresas'},
+        {'name': 'empleados', 'description': 'Expedientes de empleados'},
+        {'name': 'contratos', 'description': 'Contratos laborales y adendas'},
+        {'name': 'vacaciones', 'description': 'Gestión de vacaciones'},
+        {'name': 'prestaciones', 'description': 'Planes de prestaciones'},
+        {'name': 'nomina', 'description': 'Cálculo y gestión de nómina'},
+        {'name': 'desempeno', 'description': 'Evaluaciones y KPIs'},
+        {'name': 'chat', 'description': 'Chat IA con acciones'},
+        {'name': 'integraciones', 'description': 'Google Calendar y otros'},
+        {'name': 'reportes', 'description': 'Generación de reportes'},
+        {'name': 'solicitudes', 'description': 'Solicitudes y aprobaciones'},
+        {'name': 'notificaciones', 'description': 'Sistema de notificaciones'},
+        {'name': 'documentos', 'description': 'Gestión documental'},
+    ],
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'filter': True,
+    },
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
 }
 
 # ========================================
