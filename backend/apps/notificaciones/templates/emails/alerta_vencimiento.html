@@ -1,0 +1,71 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Alerta de Vencimiento{% endblock %}
+{% block header_subtitle %}Documento Próximo a Vencer{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ destinatario.first_name|default:destinatario.email }}</strong>,</p>
+
+{% if dias_restantes <= 3 %}
+<p style="font-size: 18px;">
+    <span class="badge badge-urgente">URGENTE</span>
+</p>
+{% elif dias_restantes <= 7 %}
+<p style="font-size: 18px;">
+    <span class="badge badge-alta">IMPORTANTE</span>
+</p>
+{% endif %}
+
+<p>Te informamos que el siguiente documento está próximo a vencer:</p>
+
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Documento:</span>
+        <span class="info-value">{{ tipo_documento }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Empleado:</span>
+        <span class="info-value">{{ empleado.nombre_completo|default:empleado }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Fecha de Vencimiento:</span>
+        <span class="info-value">{{ fecha_vencimiento|date:"d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Días Restantes:</span>
+        <span class="info-value" style="color: {% if dias_restantes <= 3 %}#dc3545{% elif dias_restantes <= 7 %}#fd7e14{% else %}#ffc107{% endif %}; font-weight: bold;">
+            {{ dias_restantes }} días
+        </span>
+    </div>
+</div>
+
+{% if datos %}
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Empleado:</span>
+        <span class="info-value">{{ datos.empleado_nombre }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Fecha de Vencimiento:</span>
+        <span class="info-value">{{ datos.fecha_vencimiento }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Días Restantes:</span>
+        <span class="info-value">{{ datos.dias_restantes }} días</span>
+    </div>
+</div>
+{% endif %}
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #666;">
+    Por favor, asegúrate de renovar o actualizar este documento antes de su vencimiento
+    para evitar problemas de cumplimiento.
+</p>
+
+<div class="actions">
+    <a href="{{ frontend_url }}/expedientes" class="btn btn-primary">
+        Ver Expediente
+    </a>
+</div>
+{% endblock %}

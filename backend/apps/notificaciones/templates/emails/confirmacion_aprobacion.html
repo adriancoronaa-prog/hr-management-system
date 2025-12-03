@@ -1,0 +1,50 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Solicitud Aprobada{% endblock %}
+{% block header_subtitle %}Solicitud Aprobada{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ destinatario.first_name|default:destinatario.email }}</strong>,</p>
+
+<p style="font-size: 18px;">
+    <span class="badge badge-aprobada">APROBADA</span>
+</p>
+
+<p>Tu solicitud de <strong>{{ tipo_solicitud }}</strong> ha sido aprobada.</p>
+
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Aprobado por:</span>
+        <span class="info-value">{{ aprobador.get_full_name|default:aprobador.email }}</span>
+    </div>
+    {% if comentarios %}
+    <div class="info-row">
+        <span class="info-label">Comentarios:</span>
+        <span class="info-value">{{ comentarios }}</span>
+    </div>
+    {% endif %}
+</div>
+
+{% if datos %}
+<div class="info-box">
+    {% if datos.aprobador_nombre %}
+    <div class="info-row">
+        <span class="info-label">Aprobado por:</span>
+        <span class="info-value">{{ datos.aprobador_nombre }}</span>
+    </div>
+    {% endif %}
+    {% if datos.comentarios %}
+    <div class="info-row">
+        <span class="info-label">Comentarios:</span>
+        <span class="info-value">{{ datos.comentarios }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="actions">
+    <a href="{{ frontend_url }}/mis-solicitudes" class="btn btn-primary">
+        Ver Mis Solicitudes
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+# =================================
+# Python / Django
+# =================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Migrations (opcional - algunos prefieren incluirlas)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# =================================
+# Environment & Secrets
+# =================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+secrets.json
+
+# =================================
+# Node / React Frontend
+# =================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+
+# =================================
+# IDE & Editors
+# =================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# =================================
+# OS Files
+# =================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# =================================
+# Testing & Coverage
+# =================================
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# =================================
+# Jupyter Notebooks
+# =================================
+.ipynb_checkpoints
+
+# =================================
+# Docker (si lo usas después)
+# =================================
+# docker-compose.override.yml
+
+# =================================
+# Deployment specific
+# =================================
+.vercel
+.netlify

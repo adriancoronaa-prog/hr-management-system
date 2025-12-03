@@ -1,0 +1,29 @@
+{% extends "emails/base_email.html" %}
+
+{% block titulo %}Activa tu cuenta{% endblock %}
+
+{% block contenido %}
+<h2 style="color: #1e40af; margin-bottom: 20px;">Bienvenido al Sistema RRHH</h2>
+
+<p>Hola{{ usuario.first_name|default:'' }},</p>
+
+<p>Tu cuenta ha sido creada exitosamente. Para comenzar a usar el sistema, necesitas activar tu cuenta haciendo clic en el siguiente boton:</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ url_activacion }}"
+       style="background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+        Activar mi cuenta
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px;">
+    Si el boton no funciona, copia y pega este enlace en tu navegador:<br>
+    <a href="{{ url_activacion }}" style="color: #2563eb;">{{ url_activacion }}</a>
+</p>
+
+<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0;">
+    <strong>Importante:</strong> Este enlace expira en {{ horas_valido }} horas.
+</div>
+
+<p>Si no solicitaste esta cuenta, puedes ignorar este correo.</p>
+{% endblock %}

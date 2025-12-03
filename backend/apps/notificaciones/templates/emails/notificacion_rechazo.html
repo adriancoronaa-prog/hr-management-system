@@ -1,0 +1,55 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Solicitud Rechazada{% endblock %}
+{% block header_subtitle %}Solicitud Rechazada{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ destinatario.first_name|default:destinatario.email }}</strong>,</p>
+
+<p style="font-size: 18px;">
+    <span class="badge badge-rechazada">RECHAZADA</span>
+</p>
+
+<p>Lamentamos informarte que tu solicitud de <strong>{{ tipo_solicitud }}</strong> ha sido rechazada.</p>
+
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Rechazado por:</span>
+        <span class="info-value">{{ rechazador.get_full_name|default:rechazador.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Motivo:</span>
+        <span class="info-value">{{ motivo }}</span>
+    </div>
+</div>
+
+{% if datos %}
+<div class="info-box">
+    {% if datos.rechazador_nombre %}
+    <div class="info-row">
+        <span class="info-label">Rechazado por:</span>
+        <span class="info-value">{{ datos.rechazador_nombre }}</span>
+    </div>
+    {% endif %}
+    {% if datos.motivo %}
+    <div class="info-row">
+        <span class="info-label">Motivo:</span>
+        <span class="info-value">{{ datos.motivo }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #666;">
+    Si tienes dudas sobre esta decisión, puedes contactar directamente con tu supervisor
+    o con el departamento de Recursos Humanos.
+</p>
+
+<div class="actions">
+    <a href="{{ frontend_url }}/mis-solicitudes" class="btn btn-outline">
+        Ver Mis Solicitudes
+    </a>
+</div>
+{% endblock %}

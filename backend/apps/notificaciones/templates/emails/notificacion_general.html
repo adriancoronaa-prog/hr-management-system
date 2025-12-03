@@ -1,0 +1,34 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}{{ notificacion.titulo|default:"Notificación" }}{% endblock %}
+{% block header_subtitle %}{{ notificacion.tipo|default:"Notificación"|title }}{% endblock %}
+
+{% block content %}
+<p>Hola,</p>
+
+{% if notificacion %}
+<h2 style="color: #333; margin-bottom: 15px;">{{ notificacion.titulo }}</h2>
+
+<p>{{ notificacion.mensaje }}</p>
+
+{% if notificacion.datos_extra %}
+<div class="info-box">
+    {% for key, value in notificacion.datos_extra.items %}
+    <div class="info-row">
+        <span class="info-label">{{ key|title }}:</span>
+        <span class="info-value">{{ value }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<p>Tienes una nueva notificación en el sistema.</p>
+{% endif %}
+
+<div class="actions">
+    <a href="{{ frontend_url }}/notificaciones" class="btn btn-primary">
+        Ver en el Sistema
+    </a>
+</div>
+{% endblock %}

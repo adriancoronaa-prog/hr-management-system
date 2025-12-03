@@ -1,0 +1,49 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Recibo de Nómina Disponible{% endblock %}
+{% block header_subtitle %}Nómina{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ empleado.nombre_completo|default:empleado }}</strong>,</p>
+
+<p>Tu recibo de nómina está disponible para consulta y descarga.</p>
+
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Período:</span>
+        <span class="info-value">{{ periodo }}</span>
+    </div>
+    {% if datos %}
+    <div class="info-row">
+        <span class="info-label">Fecha Inicio:</span>
+        <span class="info-value">{{ datos.periodo_inicio }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Fecha Fin:</span>
+        <span class="info-value">{{ datos.periodo_fin }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="actions">
+    {% if url_descarga %}
+    <a href="{{ url_descarga }}" class="btn btn-success">
+        Descargar Recibo
+    </a>
+    {% endif %}
+    <a href="{{ frontend_url }}/mis-recibos" class="btn btn-primary">
+        Ver Mis Recibos
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #666;">
+    Tu recibo de nómina contiene información confidencial. Por favor, descárgalo
+    y guárdalo en un lugar seguro para tus registros personales.
+</p>
+
+<p style="font-size: 13px; color: #999;">
+    Si tienes alguna duda sobre tu nómina, contacta al departamento de Recursos Humanos.
+</p>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Bienvenido/a{% endblock %}
+{% block header_subtitle %}Bienvenida{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ empleado.nombre_completo|default:empleado }}</strong>,</p>
+
+<p style="font-size: 18px;">
+    ¡Bienvenido/a al equipo{% if empleado.empresa %} de <strong>{{ empleado.empresa.nombre }}</strong>{% endif %}!
+</p>
+
+<p>
+    Nos da mucho gusto tenerte con nosotros. A partir de ahora podrás acceder
+    al sistema de Recursos Humanos donde encontrarás información importante
+    sobre tu empleo, recibos de nómina, solicitudes y más.
+</p>
+
+{% if credenciales %}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #333;">Tus credenciales de acceso:</h3>
+    <div class="info-row">
+        <span class="info-label">Usuario:</span>
+        <span class="info-value">{{ credenciales.usuario }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Contraseña temporal:</span>
+        <span class="info-value">{{ credenciales.password }}</span>
+    </div>
+</div>
+
+<p style="font-size: 14px; color: #dc3545; font-weight: 600;">
+    Por seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.
+</p>
+{% endif %}
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #333;">Información de tu puesto:</h3>
+    {% if empleado.puesto %}
+    <div class="info-row">
+        <span class="info-label">Puesto:</span>
+        <span class="info-value">{{ empleado.puesto.nombre }}</span>
+    </div>
+    {% endif %}
+    {% if empleado.departamento %}
+    <div class="info-row">
+        <span class="info-label">Departamento:</span>
+        <span class="info-value">{{ empleado.departamento.nombre }}</span>
+    </div>
+    {% endif %}
+    {% if empleado.fecha_ingreso %}
+    <div class="info-row">
+        <span class="info-label">Fecha de Ingreso:</span>
+        <span class="info-value">{{ empleado.fecha_ingreso|date:"d/m/Y" }}</span>
+    </div>
+    {% endif %}
+    {% if empleado.jefe_directo %}
+    <div class="info-row">
+        <span class="info-label">Tu Jefe Directo:</span>
+        <span class="info-value">{{ empleado.jefe_directo.nombre_completo }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="actions">
+    <a href="{{ frontend_url }}" class="btn btn-primary">
+        Acceder al Sistema
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #666;">
+    Si tienes alguna pregunta, no dudes en contactar al departamento de Recursos Humanos.
+    Estamos aquí para ayudarte en lo que necesites.
+</p>
+
+<p style="font-size: 16px; margin-top: 20px;">
+    ¡Mucho éxito en esta nueva etapa!
+</p>
+{% endblock %}

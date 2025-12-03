@@ -1,0 +1,55 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Solicitud Pendiente de Aprobación{% endblock %}
+{% block header_subtitle %}Solicitud Pendiente{% endblock %}
+
+{% block content %}
+<p>Hola <strong>{{ jefe.first_name|default:jefe.email }}</strong>,</p>
+
+<p>Tienes una nueva solicitud pendiente de aprobación:</p>
+
+<div class="info-box">
+    <div class="info-row">
+        <span class="info-label">Tipo de Solicitud:</span>
+        <span class="info-value">
+            <span class="badge badge-solicitud">{{ tipo_solicitud }}</span>
+        </span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Solicitante:</span>
+        <span class="info-value">{{ solicitante.get_full_name|default:solicitante.email }}</span>
+    </div>
+    {% if detalles %}
+        {% for key, value in detalles.items %}
+        <div class="info-row">
+            <span class="info-label">{{ key }}:</span>
+            <span class="info-value">{{ value }}</span>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% if datos.detalles %}
+<div class="info-box">
+    {% for key, value in datos.detalles.items %}
+    <div class="info-row">
+        <span class="info-label">{{ key }}:</span>
+        <span class="info-value">{{ value }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="actions">
+    <a href="{{ frontend_url }}/solicitudes/pendientes" class="btn btn-primary">
+        Ver Solicitud
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #666;">
+    Esta solicitud requiere tu revisión y aprobación. Puedes aprobarla o rechazarla
+    desde el sistema o respondiendo a este correo con tu decisión.
+</p>
+{% endblock %}
