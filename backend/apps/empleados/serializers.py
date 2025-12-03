@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Empleado
 from .services import calcular_resumen_vacaciones, calcular_antiguedad
+from apps.core.validators import validar_rfc, validar_curp, validar_nss, validar_clabe
 
 
 class EmpleadoListSerializer(serializers.ModelSerializer):
@@ -59,7 +60,7 @@ class EmpleadoSerializer(serializers.ModelSerializer):
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
     """Serializer para creación con alta retroactiva"""
-    
+
     # Campo opcional para registrar historial de vacaciones al dar de alta
     vacaciones_historico = serializers.ListField(
         child=serializers.DictField(),
@@ -67,19 +68,55 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
         write_only=True,
         help_text="Lista de {periodo: int, dias_tomados: int} para registro retroactivo"
     )
-    
+
     # Campo opcional para indicar saldo actual directo
     saldo_vacaciones_actual = serializers.IntegerField(
         required=False,
         write_only=True,
         help_text="Saldo actual de vacaciones (el sistema calcula los tomados)"
     )
-    
+
     class Meta:
         model = Empleado
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
-    
+
+    def validate_rfc(self, value):
+        """Valida RFC mexicano"""
+        if not value or value.lower() in ['pendiente', 'no tiene', 'n/a', '-']:
+            return value
+        es_valido, mensaje = validar_rfc(value, tipo='fisica')
+        if not es_valido:
+            raise serializers.ValidationError(mensaje)
+        return value.upper().strip()
+
+    def validate_curp(self, value):
+        """Valida CURP mexicana"""
+        if not value or value.lower() in ['pendiente', 'no tiene', 'n/a', '-']:
+            return value
+        es_valido, mensaje = validar_curp(value)
+        if not es_valido:
+            raise serializers.ValidationError(mensaje)
+        return value.upper().strip()
+
+    def validate_nss(self, value):
+        """Valida NSS del IMSS"""
+        if not value or value.lower() in ['pendiente', 'no tiene', 'n/a', '-']:
+            return value
+        es_valido, mensaje = validar_nss(value)
+        if not es_valido:
+            raise serializers.ValidationError(mensaje)
+        return value.strip()
+
+    def validate_clabe(self, value):
+        """Valida CLABE bancaria"""
+        if not value or value.lower() in ['pendiente', 'no tiene', 'n/a', '-']:
+            return value
+        es_valido, mensaje = validar_clabe(value)
+        if not es_valido:
+            raise serializers.ValidationError(mensaje)
+        return value.strip()
+
     def validate_fecha_ingreso(self, value):
         """Permite fechas pasadas (retroactivas)"""
         from django.utils import timezone

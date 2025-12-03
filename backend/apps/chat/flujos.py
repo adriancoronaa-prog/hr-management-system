@@ -2,6 +2,7 @@
 Flujos conversacionales guiados con soporte para archivos
 """
 from typing import Dict, List, Optional
+from apps.core.validators import validar_campo_fiscal
 
 FLUJOS = {
     'baja_empleado': {
@@ -359,15 +360,11 @@ def validar_respuesta_paso(paso: Dict, respuesta: str) -> tuple[bool, str, any]:
 
     elif tipo == 'texto':
         validacion = paso.get('validacion')
-        if validacion == 'rfc' and len(respuesta.strip()) not in [12, 13]:
-            if respuesta_lower != 'pendiente':
-                return False, 'El RFC debe tener 12 o 13 caracteres', None
-        elif validacion == 'curp' and len(respuesta.strip()) != 18:
-            if respuesta_lower != 'pendiente':
-                return False, 'El CURP debe tener 18 caracteres', None
-        elif validacion == 'nss' and len(respuesta.strip()) != 11:
-            if respuesta_lower not in ['pendiente', 'no tiene']:
-                return False, 'El NSS debe tener 11 dígitos', None
+        if validacion in ['rfc', 'rfc_fisica', 'rfc_moral', 'curp', 'nss', 'clabe']:
+            es_valido, mensaje, valor_normalizado = validar_campo_fiscal(respuesta.strip(), validacion)
+            if not es_valido:
+                return False, mensaje, None
+            return True, '', valor_normalizado if valor_normalizado else respuesta.strip()
         return True, '', respuesta.strip()
 
     elif tipo in ['archivo', 'archivos_multiple']:
