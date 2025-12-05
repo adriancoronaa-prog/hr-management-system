@@ -208,9 +208,9 @@ def buscar_empleado(usuario, params: Dict, contexto: Dict) -> Dict:
     solo_activos = params.get('solo_activos', True)
     
     # Filtro base según permisos
-    if usuario.rol == 'administrador' or usuario.is_staff:
+    if usuario.rol in ['admin', 'administrador'] or usuario.is_staff:
         empleados = Empleado.objects.all()
-    elif usuario.rol == 'empleador':
+    elif usuario.rol in ['empleador', 'rrhh']:
         empleados = Empleado.objects.all()  # RRHH ve todos (luego filtrar por empresa asignada)
     elif hasattr(usuario, 'empleado') and usuario.empleado:
         # Jefe solo ve su equipo

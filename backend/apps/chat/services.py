@@ -19,127 +19,44 @@ from .acciones_registry import (
 from .permisos import obtener_contexto_permisos
 
 
-SYSTEM_PROMPT_BASE = """Eres un asistente de Recursos Humanos para empresas mexicanas. Tu nombre es "Asistente RRHH".
+SYSTEM_PROMPT_BASE = """Eres un asistente de RRHH para empresas mexicanas. Responde de forma BREVE y DIRECTA.
 
-PERSONALIDAD:
-- Eres proactivo y guías al usuario paso a paso
-- Preguntas la información que falta antes de ejecutar acciones
-- Ofreces siguientes pasos después de completar acciones
-- Eres experto en legislación laboral mexicana (LFT, IMSS, SAT)
+ESTILO:
+- Respuestas cortas (2-4 lineas para consultas simples)
+- Sin emojis
+- Espanol formal pero conciso
+- Moneda: $1,234.56 | Fechas: 15/03/2025
 
-CAPACIDADES:
-- Gestionar empresas, empleados, contratos y documentos
-- Calcular nómina, vacaciones, aguinaldo, finiquitos y liquidaciones
-- Responder preguntas sobre la Ley Federal del Trabajo (LFT)
-- Generar reportes y PDFs
-- Consultar estructura organizacional (jefes, subordinados)
-- Administrar KPIs y evaluaciones de desempeño
-- Gestionar expedientes digitales de empleados
-- Recibir y procesar archivos adjuntos
+MAPEO DE INTENCIONES (usa estas acciones):
+- "ver empleados" / "listar empleados" / "cuantos empleados" -> buscar_empleado
+- "buscar a [nombre]" -> buscar_empleado con nombre
+- "solicitudes pendientes" -> ver_solicitudes_pendientes
+- "calcular nomina" -> calcular_nomina
+- "mi recibo" -> ver_mi_recibo
+- "generar constancia para [nombre]" -> generar_constancia_laboral
+- "mis vacaciones" / "mis prestaciones" -> ver_mis_prestaciones
+- "crear empleado" / "nuevo empleado" -> crear_empleado
+- "mi perfil" -> ver_mi_perfil
+- "contratos por vencer" -> ver_contratos_por_vencer
 
-CAPACIDAD DE ARCHIVOS:
-- El usuario puede subir archivos en cualquier momento
-- Cuando recibas un archivo, lo verás como [ARCHIVO ADJUNTO: nombre.ext]
-- Podrás leer el contenido de PDFs, Word y TXT
-- Los archivos se guardan automáticamente en el expediente del empleado en contexto
-- Confirma al usuario que recibiste y procesaste el archivo
+CUANDO EL USUARIO PIDA ALGO:
+1. Identifica la intencion
+2. Usa la accion correspondiente del mapeo o de ACCIONES DISPONIBLES
+3. Responde con el resultado de forma breve
 
-REGLAS:
-- Siempre responde en español
-- Usa formato de moneda mexicana ($X,XXX.XX)
-- Fechas en formato dd/mm/yyyy
-- SIEMPRE valida permisos antes de ejecutar acciones
-- Si no tienes información suficiente, PREGUNTA antes de actuar
-- Confirma antes de acciones destructivas (eliminar, dar de baja)
+ARCHIVOS:
+- Imagenes: extrae datos (INE, RFC, CURP, NSS)
+- PDFs/Word: confirma recepcion
 
-FLUJOS GUIADOS - Para procesos importantes, guía paso a paso:
-
-BAJA DE EMPLEADO:
-1. Confirmar empleado (mostrar sus datos)
-2. Preguntar tipo de baja
-3. Preguntar último día laborado
-4. Solicitar carta de renuncia/documento (puede subirlo)
-5. Calcular y mostrar liquidación
-6. Ofrecer generar finiquito PDF
-7. Confirmar y ejecutar baja
-
-ALTA DE EMPLEADO:
-1. Pedir datos básicos (nombre, RFC, CURP)
-2. Pedir datos laborales (puesto, salario, fecha ingreso)
-3. Preguntar jefe directo
-4. Solicitar documentos (INE, CURP, comprobante) - puede subirlos
-5. Confirmar y crear
-
-INCIDENCIAS:
-1. Confirmar empleado
-2. Tipo de incidencia
-3. Fechas
-4. Solicitar documento soporte (incapacidad IMSS, permiso)
-5. Si es incapacidad: pedir folio IMSS
-6. Confirmar y registrar
-
-IMPORTANTE SOBRE PARÁMETROS:
-- Cuando una acción acepta "empleado_nombre", PASA EL NOMBRE DIRECTAMENTE sin buscar primero
-- La acción buscará al empleado automáticamente por nombre
-- NO ejecutes "buscar_empleado" antes de otras acciones si ya tienes el nombre
-
-IMPORTANTE SOBRE ARCHIVOS:
-- Cuando el usuario suba un archivo durante un flujo, agradece y confirma que tipo detectaste
-- Ejemplo: "Recibi la carta de renuncia de Juan. La he guardado en su expediente."
-- Si no puedes leer el contenido, indicalo pero guarda el archivo igual
-- Ofrece subir mas documentos si el expediente esta incompleto
-
-ANALISIS DE IMAGENES (Vision):
-Cuando recibas una imagen de documento mexicano, extrae TODA la informacion visible:
-
-Para INE/IFE:
-- Nombre completo (nombre, apellido paterno, apellido materno)
-- CURP
-- Clave de elector
-- Fecha de nacimiento
-- Sexo
-- Domicilio completo
-- Vigencia
-
-Para Constancia RFC (SAT):
-- RFC completo
-- Nombre o razon social
-- Regimen fiscal
-- Codigo postal
-- Fecha de inscripcion
-
-Para Comprobante de domicilio:
-- Nombre del titular
-- Direccion completa (calle, numero, colonia, CP, ciudad, estado)
-- Fecha del comprobante
-- Tipo de servicio
-
-Para NSS/IMSS:
-- Numero de Seguro Social (11 digitos)
-- Nombre del asegurado
-- CURP
-
-Para cualquier otro documento:
-- Extrae todos los datos visibles de forma estructurada
-- Indica el tipo de documento identificado
-
-Despues de extraer, ofrece guardar los datos en el sistema si corresponde a un empleado.
-
-FORMATO DE RESPUESTA PARA ACCIONES:
-Cuando detectes que el usuario quiere realizar una acción, incluye un bloque JSON:
+FORMATO DE ACCION:
 ```action
 {
-    "accion": "nombre_de_la_accion",
-    "parametros": {
-        "param1": "valor1"
-    },
-    "requiere_confirmacion": true/false,
-    "mensaje_confirmacion": "¿Confirmas esta acción?"
+    "accion": "nombre_accion",
+    "parametros": {}
 }
 ```
 
-Para consultas informativas, responde directamente sin JSON.
-Usa emojis para hacer la conversación amigable: 📋 👤 💼 📄 ✅ ❌ 💰 🏥 📎
+Para saludos o preguntas generales, responde directamente sin accion.
 """
 
 
@@ -251,14 +168,23 @@ class AsistenteRRHH:
         
         # Ejecutar acción si existe y no requiere confirmación
         resultado_accion = None
-        if accion and not accion.get('requiere_confirmacion', True):
+        if accion and not accion.get('requiere_confirmacion', False):
             resultado_accion = self._ejecutar_accion(accion)
+            # DEBUG: Resultado de la accion
+            print("=" * 50)
+            print("RESULTADO DE ACCION:")
+            print(f"Success: {resultado_accion.get('success')}")
+            print(f"Mensaje: {resultado_accion.get('mensaje', 'N/A')}")
+            print(f"Error: {resultado_accion.get('error', 'N/A')}")
+            if 'empleados' in resultado_accion:
+                print(f"Empleados encontrados: {len(resultado_accion['empleados'])}")
+            print("=" * 50)
             if resultado_accion.get('success'):
-                texto_respuesta += f"\n\n✅ {resultado_accion.get('mensaje', 'Acción completada')}"
+                texto_respuesta += f"\n\n{resultado_accion.get('mensaje', 'Accion completada')}"
                 # Mostrar datos adicionales si existen
                 texto_respuesta += self._formatear_datos_accion(resultado_accion)
             else:
-                texto_respuesta += f"\n\n❌ Error: {resultado_accion.get('error', 'Error desconocido')}"
+                texto_respuesta += f"\n\nError: {resultado_accion.get('error', 'Error desconocido')}"
 
         # Si no hubo acción, intentar buscar en documentos RAG
         elif not accion:
@@ -283,6 +209,12 @@ class AsistenteRRHH:
             conversacion.titulo = mensaje[:100]
             conversacion.save()
         
+        # DEBUG: Respuesta final al frontend
+        print("=" * 50)
+        print("RESPUESTA FINAL AL FRONTEND:")
+        print(texto_respuesta[:500] if texto_respuesta else "VACIA")
+        print("=" * 50)
+
         return {
             'conversacion_id': str(conversacion.id),
             'mensaje_id': str(mensaje_asistente.id),
@@ -368,6 +300,12 @@ class AsistenteRRHH:
                 # Mensaje solo texto
                 content = mensaje
 
+            # DEBUG: Ver contexto enviado a Claude
+            print("=" * 50)
+            print("CONTEXTO ENVIADO A CLAUDE:")
+            print(contexto[:2000])
+            print("=" * 50)
+
             with httpx.Client(timeout=60.0) as client:
                 response = client.post(
                     "https://api.anthropic.com/v1/messages",
@@ -386,7 +324,13 @@ class AsistenteRRHH:
 
                 if response.status_code == 200:
                     data = response.json()
-                    return data['content'][0]['text']
+                    respuesta_texto = data['content'][0]['text']
+                    # DEBUG: Ver respuesta de Claude
+                    print("=" * 50)
+                    print("RESPUESTA RAW DE CLAUDE:")
+                    print(respuesta_texto[:1500])
+                    print("=" * 50)
+                    return respuesta_texto
                 else:
                     return f"Error al comunicar con IA: {response.status_code} - {response.text}"
 
@@ -399,17 +343,24 @@ class AsistenteRRHH:
         """Extrae texto y acción de la respuesta"""
         accion = None
         texto = respuesta
-        
+
         patron = r'```action\s*(.*?)\s*```'
         match = re.search(patron, respuesta, re.DOTALL)
-        
+
         if match:
             try:
                 accion = json.loads(match.group(1))
                 texto = re.sub(patron, '', respuesta, flags=re.DOTALL).strip()
-            except json.JSONDecodeError:
-                pass
-        
+                # DEBUG: Accion detectada
+                print("=" * 50)
+                print("ACCION DETECTADA:", accion)
+                print("=" * 50)
+            except json.JSONDecodeError as e:
+                print("ERROR PARSEANDO JSON DE ACCION:", e)
+                print("JSON RAW:", match.group(1))
+        else:
+            print("NO SE DETECTO BLOQUE ```action``` EN LA RESPUESTA")
+
         return texto, accion
     
     def _ejecutar_accion(self, accion: Dict) -> Dict:
@@ -443,9 +394,9 @@ class AsistenteRRHH:
         
         # Guardar mensaje de resultado
         if resultado.get('success'):
-            contenido = f"✅ {resultado.get('mensaje', 'Acción completada')}"
+            contenido = f"{resultado.get('mensaje', 'Accion completada')}"
         else:
-            contenido = f"❌ Error: {resultado.get('error', 'Error desconocido')}"
+            contenido = f"Error: {resultado.get('error', 'Error desconocido')}"
         
         Mensaje.objects.create(
             conversacion=conversacion,
@@ -466,7 +417,7 @@ class AsistenteRRHH:
         Mensaje.objects.create(
             conversacion=conversacion,
             rol='assistant',
-            contenido='❌ Acción cancelada por el usuario.'
+            contenido='Accion cancelada.'
         )
         
         return {'success': True, 'mensaje': 'Acción cancelada'}
@@ -639,7 +590,7 @@ INSTRUCCIONES:
                 if response.status_code == 200:
                     data = response.json()
                     respuesta = data['content'][0]['text']
-                    return f"📄 *Información de documentos de la empresa:*\n\n{respuesta}"
+                    return f"Informacion de documentos de la empresa:\n\n{respuesta}"
 
         except Exception as e:
             print(f"Error en respuesta RAG: {e}")

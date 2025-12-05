@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Empleado
+from .models import Empleado, DocumentoEmpleado
 from .services import calcular_resumen_vacaciones, calcular_antiguedad
 from apps.core.validators import validar_rfc, validar_curp, validar_nss, validar_clabe
 
@@ -9,13 +9,14 @@ class EmpleadoListSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.ReadOnlyField()
     empresa_nombre = serializers.CharField(source='empresa.razon_social', read_only=True)
     antiguedad_anos = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Empleado
         fields = [
-            'id', 'nombre_completo', 'puesto', 'departamento',
+            'id', 'nombre', 'apellido_paterno', 'apellido_materno',
+            'nombre_completo', 'puesto', 'departamento',
             'empresa', 'empresa_nombre', 'estado', 'fecha_ingreso',
-            'antiguedad_anos'
+            'antiguedad_anos', 'foto', 'email_corporativo'
         ]
     
     def get_antiguedad_anos(self, obj):
@@ -26,17 +27,33 @@ class EmpleadoSerializer(serializers.ModelSerializer):
     """Serializer completo para detalle/creación"""
     nombre_completo = serializers.ReadOnlyField()
     antiguedad = serializers.SerializerMethodField()
+    antiguedad_anos = serializers.SerializerMethodField()
     proximo_aniversario = serializers.ReadOnlyField()
     salario_mensual = serializers.ReadOnlyField()
     resumen_vacaciones = serializers.SerializerMethodField()
-    
+    empresa_nombre = serializers.SerializerMethodField()
+    jefe_directo_nombre = serializers.SerializerMethodField()
+
     class Meta:
         model = Empleado
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
-    
+
     def get_antiguedad(self, obj):
         return obj.antiguedad
+
+    def get_antiguedad_anos(self, obj):
+        return obj.anos_completos
+
+    def get_empresa_nombre(self, obj):
+        if obj.empresa:
+            return obj.empresa.nombre_comercial or obj.empresa.razon_social
+        return None
+
+    def get_jefe_directo_nombre(self, obj):
+        if obj.jefe_directo:
+            return f"{obj.jefe_directo.nombre} {obj.jefe_directo.apellido_paterno}"
+        return None
     
     def get_resumen_vacaciones(self, obj):
         # Obtener días extra del plan si existe
@@ -176,5 +193,41 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
                 fecha_vencimiento=p['fecha_vencimiento'],
                 es_historico=True
             )
-        
+
         return empleado
+
+
+class DocumentoEmpleadoSerializer(serializers.ModelSerializer):
+    """Serializer para documentos del expediente del empleado"""
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    estatus_display = serializers.CharField(source='get_estatus_display', read_only=True)
+    archivo_url = serializers.SerializerMethodField()
+    revisado_por_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentoEmpleado
+        fields = [
+            'id', 'empleado', 'tipo', 'tipo_display', 'nombre', 'descripcion',
+            'archivo', 'archivo_url', 'tipo_archivo', 'tamaño_bytes',
+            'fecha_documento', 'fecha_vencimiento', 'folio',
+            'estatus', 'estatus_display', 'revisado_por', 'revisado_por_nombre',
+            'fecha_revision', 'notas_revision',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'empleado', 'tipo_archivo', 'tamaño_bytes',
+            'created_at', 'updated_at', 'revisado_por', 'fecha_revision'
+        ]
+
+    def get_archivo_url(self, obj):
+        if obj.archivo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.archivo.url)
+            return obj.archivo.url
+        return None
+
+    def get_revisado_por_nombre(self, obj):
+        if obj.revisado_por:
+            return f"{obj.revisado_por.nombre} {obj.revisado_por.apellido}"
+        return None

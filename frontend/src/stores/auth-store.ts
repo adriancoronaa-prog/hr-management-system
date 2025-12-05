@@ -127,7 +127,17 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setEmpresas: (empresas: Empresa[]) => {
+        const { empresaActual } = get();
         set({ empresas });
+
+        // Si no hay empresa actual pero hay empresas, seleccionar la primera
+        if (!empresaActual && empresas.length > 0) {
+          set({ empresaActual: empresas[0] });
+        }
+        // Si la empresa actual ya no existe en la lista, seleccionar la primera
+        else if (empresaActual && !empresas.find(e => e.id === empresaActual.id)) {
+          set({ empresaActual: empresas.length > 0 ? empresas[0] : null });
+        }
       },
 
       clearError: () => {

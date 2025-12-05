@@ -9,7 +9,7 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and empresa_id
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
@@ -19,6 +19,10 @@ api.interceptors.request.use(
           const { state } = JSON.parse(authStorage);
           if (state?.token) {
             config.headers.Authorization = `Bearer ${state.token}`;
+          }
+          // Agregar empresa_id como header
+          if (state?.empresaActual?.id) {
+            config.headers["X-Empresa-ID"] = state.empresaActual.id;
           }
         } catch {
           // Invalid storage format

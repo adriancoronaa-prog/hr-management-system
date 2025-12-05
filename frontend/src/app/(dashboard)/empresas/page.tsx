@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import type { Empresa } from "@/types";
 import {
   Building2,
   Plus,
@@ -20,18 +20,6 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Empresa {
-  id: string;
-  razon_social: string;
-  nombre_comercial: string;
-  rfc: string;
-  direccion: string;
-  telefono: string;
-  email: string;
-  estado: string;
-  empleados_count?: number;
-}
 
 export default function EmpresasPage() {
   const { user, empresaActual, setEmpresaActual } = useAuthStore();
@@ -50,11 +38,13 @@ export default function EmpresasPage() {
   const handleSetActiva = (empresa: Empresa) => {
     setEmpresaActual({
       id: empresa.id,
-      nombre: empresa.nombre_comercial || empresa.razon_social,
-      nombre_comercial: empresa.nombre_comercial,
+      rfc: empresa.rfc,
       razon_social: empresa.razon_social,
+      nombre_comercial: empresa.nombre_comercial,
     });
     setMenuOpen(null);
+    // Recargar para que todos los componentes usen la nueva empresa
+    window.location.reload();
   };
 
   if (user?.rol !== "admin") {
@@ -185,26 +175,33 @@ export default function EmpresasPage() {
                   </button>
 
                   {menuOpen === empresa.id && (
-                    <div className="absolute right-0 mt-1 w-40 bg-white border border-warm-200 rounded-lg shadow-lg z-10 overflow-hidden">
-                      <button
-                        onClick={() => handleSetActiva(empresa)}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-warm-50"
-                      >
-                        <CheckCircle className="h-4 w-4" strokeWidth={1.5} />
-                        Establecer activa
-                      </button>
-                      <Link
-                        href={`/empresas/${empresa.id}`}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-warm-50"
-                      >
-                        <Edit className="h-4 w-4" strokeWidth={1.5} />
-                        Editar
-                      </Link>
-                      <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-red-600 hover:bg-red-50">
-                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                        Eliminar
-                      </button>
-                    </div>
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setMenuOpen(null)}
+                      />
+                      <div className="absolute right-0 mt-1 w-44 bg-white border border-warm-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                        <button
+                          onClick={() => handleSetActiva(empresa)}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-warm-700 text-left hover:bg-warm-50 hover:text-warm-900 transition-colors"
+                        >
+                          <CheckCircle className="h-4 w-4 text-horizon-500" strokeWidth={1.5} />
+                          Establecer activa
+                        </button>
+                        <Link
+                          href={`/empresas/${empresa.id}`}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-warm-700 text-left hover:bg-warm-50 hover:text-warm-900 transition-colors"
+                          onClick={() => setMenuOpen(null)}
+                        >
+                          <Edit className="h-4 w-4 text-warm-500" strokeWidth={1.5} />
+                          Editar
+                        </Link>
+                        <button className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-600 text-left hover:bg-red-50 transition-colors">
+                          <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                          Eliminar
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

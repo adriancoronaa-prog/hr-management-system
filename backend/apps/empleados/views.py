@@ -1,9 +1,13 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters import rest_framework as filters
-from .models import Empleado
-from .serializers import EmpleadoSerializer, EmpleadoListSerializer, EmpleadoCreateSerializer
+from .models import Empleado, DocumentoEmpleado
+from .serializers import (
+    EmpleadoSerializer, EmpleadoListSerializer, EmpleadoCreateSerializer,
+    DocumentoEmpleadoSerializer
+)
 from .services import calcular_resumen_vacaciones, calcular_aguinaldo
 
 
@@ -29,10 +33,19 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        qs = super().get_queryset()
-        if not user.es_super_admin:
-            qs = qs.filter(empresa__in=user.empresas.all())
-        return qs
+        queryset = super().get_queryset()
+
+        # Obtener empresa_id del header X-Empresa-ID
+        empresa_id = self.request.headers.get('X-Empresa-ID')
+
+        if empresa_id:
+            # Filtrar por empresa específica del header
+            queryset = queryset.filter(empresa_id=empresa_id)
+        elif user.rol not in ['admin', 'administrador']:
+            # Si no es admin y no hay header, filtrar por empresas del usuario
+            queryset = queryset.filter(empresa__in=user.empresas.all())
+
+        return queryset.order_by('apellido_paterno', 'nombre')
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -113,7 +126,76 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         empleado.fecha_baja = fecha_baja
         empleado.motivo_baja = motivo
         empleado.save()
-        
+
         # TODO: Calcular finiquito
-        
+
         return Response(EmpleadoSerializer(empleado).data)
+
+    @action(detail=True, methods=['get', 'post'], parser_classes=[MultiPartParser, FormParser])
+    def documentos(self, request, pk=None):
+        """Lista o sube documentos del empleado"""
+        empleado = self.get_object()
+
+        if request.method == 'GET':
+            documentos = empleado.expediente.all().order_by('-created_at')
+            serializer = DocumentoEmpleadoSerializer(
+                documentos, many=True, context={'request': request}
+            )
+            return Response(serializer.data)
+
+        # POST - subir documento
+        # Los archivos en DRF vienen en request.data cuando se usa MultiPartParser
+        serializer = DocumentoEmpleadoSerializer(
+            data=request.data, context={'request': request}
+        )
+        if serializer.is_valid():
+            # Calcular tipo de archivo y tamaño
+            archivo = serializer.validated_data.get('archivo')
+            tipo_archivo = ''
+            tamaño = 0
+            if archivo:
+                tipo_archivo = archivo.name.split('.')[-1].lower() if '.' in archivo.name else ''
+                tamaño = archivo.size
+
+            serializer.save(
+                empleado=empleado,
+                tipo_archivo=tipo_archivo,
+                tamaño_bytes=tamaño
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'], url_path='documentos/(?P<documento_id>[^/.]+)')
+    def eliminar_documento(self, request, pk=None, documento_id=None):
+        """Elimina un documento específico del empleado"""
+        empleado = self.get_object()
+
+        try:
+            documento = empleado.expediente.get(id=documento_id)
+        except DocumentoEmpleado.DoesNotExist:
+            return Response(
+                {'error': 'Documento no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Eliminar archivo físico
+        if documento.archivo:
+            documento.archivo.delete(save=False)
+
+        documento.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DocumentoEmpleadoViewSet(viewsets.ModelViewSet):
+    """ViewSet para gestionar documentos del expediente"""
+    serializer_class = DocumentoEmpleadoSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return DocumentoEmpleado.objects.select_related('empleado', 'revisado_por')
+
+    def perform_destroy(self, instance):
+        # Eliminar archivo físico antes de borrar el registro
+        if instance.archivo:
+            instance.archivo.delete(save=False)
+        instance.delete()

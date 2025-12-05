@@ -67,30 +67,33 @@ class PeriodoNominaViewSet(EmpresaFilterMixin, viewsets.ModelViewSet):
     ViewSet para periodos de nómina
     """
     permission_classes = [EsEmpleadorOAdmin]
-    
+
     def get_queryset(self):
         qs = PeriodoNomina.objects.select_related('empresa').prefetch_related('recibos')
-        
-        # Aplicar filtro de empresa
         user = self.request.user
-        if not user.es_admin:
-            empresas_ids = user.get_empresas_acceso().values_list('id', flat=True)
-            qs = qs.filter(empresa_id__in=empresas_ids)
-        
-        # Filtros adicionales
-        empresa_id = self.request.query_params.get('empresa')
+
+        # Filtrar por empresa del header X-Empresa-ID
+        empresa_id = self.request.headers.get('X-Empresa-ID')
         if empresa_id:
             qs = qs.filter(empresa_id=empresa_id)
-        
+        elif user.rol not in ['admin', 'administrador']:
+            # Si no es admin y no hay header, filtrar por empresas del usuario
+            qs = qs.filter(empresa__in=user.empresas.all())
+
+        # Filtros adicionales por query params
+        empresa_param = self.request.query_params.get('empresa')
+        if empresa_param:
+            qs = qs.filter(empresa_id=empresa_param)
+
         anio = self.request.query_params.get('anio')
         if anio:
             qs = qs.filter(año=anio)
-        
+
         estado = self.request.query_params.get('estado')
         if estado:
             qs = qs.filter(estado=estado)
-        
-        return qs
+
+        return qs.order_by('-año', '-numero_periodo')
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -172,36 +175,30 @@ class ReciboNominaViewSet(EmpleadoFilterMixin, viewsets.ModelViewSet):
     - RRHH ve recibos de sus empresas
     """
     permission_classes = [AccesoNomina]
-    
+
     def get_queryset(self):
         qs = ReciboNomina.objects.select_related(
             'periodo', 'periodo__empresa', 'empleado'
         )
-        
         user = self.request.user
-        
-        # Admin ve todo
-        if user.es_admin:
-            pass
-        # Empleador ve sus empresas
-        elif user.es_empleador:
-            empresas_ids = user.get_empresas_acceso().values_list('id', flat=True)
-            qs = qs.filter(periodo__empresa_id__in=empresas_ids)
-        # Empleado solo ve los suyos
-        elif user.es_empleado and user.empleado:
-            qs = qs.filter(empleado_id=user.empleado_id)
-        else:
-            qs = qs.none()
-        
+
+        # Filtrar por empresa del header X-Empresa-ID
+        empresa_id = self.request.headers.get('X-Empresa-ID')
+        if empresa_id:
+            qs = qs.filter(periodo__empresa_id=empresa_id)
+        elif user.rol not in ['admin', 'administrador']:
+            # Si no es admin y no hay header, filtrar por empresas del usuario
+            qs = qs.filter(periodo__empresa__in=user.empresas.all())
+
         # Filtros
         periodo_id = self.request.query_params.get('periodo')
         if periodo_id:
             qs = qs.filter(periodo_id=periodo_id)
-        
+
         empleado_id = self.request.query_params.get('empleado')
-        if empleado_id and (user.es_admin or user.es_empleador):
+        if empleado_id and user.rol in ['admin', 'administrador']:
             qs = qs.filter(empleado_id=empleado_id)
-        
+
         return qs
     
     def get_serializer_class(self):
@@ -237,8 +234,8 @@ class ReciboNominaViewSet(EmpleadoFilterMixin, viewsets.ModelViewSet):
         """
         recibo = self.get_object()
         
-        # Solo admin y empleador pueden timbrar
-        if not (request.user.es_admin or request.user.es_empleador):
+        # Solo admin puede timbrar
+        if request.user.rol not in ['admin', 'administrador']:
             return Response(
                 {'error': 'No tienes permiso para timbrar recibos'},
                 status=status.HTTP_403_FORBIDDEN
@@ -263,28 +260,32 @@ class IncidenciaNominaViewSet(EmpresaFilterMixin, viewsets.ModelViewSet):
     """
     serializer_class = IncidenciaNominaSerializer
     permission_classes = [EsEmpleadorOAdmin]
-    
+
     def get_queryset(self):
         qs = IncidenciaNomina.objects.select_related('empleado', 'empleado__empresa')
-        
         user = self.request.user
-        if not user.es_admin:
-            empresas_ids = user.get_empresas_acceso().values_list('id', flat=True)
-            qs = qs.filter(empleado__empresa_id__in=empresas_ids)
-        
+
+        # Filtrar por empresa del header X-Empresa-ID
+        empresa_id = self.request.headers.get('X-Empresa-ID')
+        if empresa_id:
+            qs = qs.filter(empleado__empresa_id=empresa_id)
+        elif user.rol not in ['admin', 'administrador']:
+            # Si no es admin y no hay header, filtrar por empresas del usuario
+            qs = qs.filter(empleado__empresa__in=user.empresas.all())
+
         # Filtros
         empleado_id = self.request.query_params.get('empleado')
         if empleado_id:
             qs = qs.filter(empleado_id=empleado_id)
-        
+
         tipo = self.request.query_params.get('tipo')
         if tipo:
             qs = qs.filter(tipo=tipo)
-        
+
         aplicado = self.request.query_params.get('aplicado')
         if aplicado is not None:
             qs = qs.filter(aplicado=aplicado.lower() == 'true')
-        
+
         return qs
     
     @action(detail=False, methods=['get'])

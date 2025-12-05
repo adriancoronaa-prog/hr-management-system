@@ -45,6 +45,7 @@ export default function NuevaEmpresaPage() {
       // Actualizar lista de empresas en el store
       const empresaParaStore = {
         id: nuevaEmpresa.id,
+        rfc: nuevaEmpresa.rfc,
         nombre: nuevaEmpresa.nombre_comercial || nuevaEmpresa.razon_social,
         nombre_comercial: nuevaEmpresa.nombre_comercial,
         razon_social: nuevaEmpresa.razon_social,

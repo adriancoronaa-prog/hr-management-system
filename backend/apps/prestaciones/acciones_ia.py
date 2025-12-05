@@ -62,7 +62,7 @@ def registrar_acciones():
 
         qs = PlanPrestaciones.objects.prefetch_related('prestaciones_adicionales')
 
-        if not usuario.es_super_admin:
+        if usuario.rol not in ['admin', 'administrador']:
             qs = qs.filter(empresa__in=usuario.empresas.all())
 
         if empresa_id:
@@ -141,7 +141,7 @@ def registrar_acciones():
         from apps.empresas.models import Empresa
         try:
             empresa = Empresa.objects.get(id=empresa_id)
-            if not usuario.es_super_admin and empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a esta empresa.'}
         except Empresa.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empresa no encontrada.'}
@@ -198,7 +198,7 @@ def registrar_acciones():
 
         try:
             plan = PlanPrestaciones.objects.get(id=plan_id)
-            if not usuario.es_super_admin and plan.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and plan.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este plan.'}
         except PlanPrestaciones.DoesNotExist:
             return {'exito': False, 'mensaje': 'Plan no encontrado.'}
@@ -282,7 +282,7 @@ def registrar_acciones():
 
         try:
             empleado = Empleado.objects.select_related('plan_prestaciones', 'empresa').get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}
@@ -392,7 +392,7 @@ def registrar_acciones():
             empleado = Empleado.objects.get(id=empleado_id)
             plan = PlanPrestaciones.objects.get(id=plan_id)
 
-            if not usuario.es_super_admin:
+            if usuario.rol not in ['admin', 'administrador']:
                 if empleado.empresa not in usuario.empresas.all():
                     return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
                 if plan.empresa != empleado.empresa:
@@ -451,7 +451,7 @@ def registrar_acciones():
 
         try:
             empleado = Empleado.objects.get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}

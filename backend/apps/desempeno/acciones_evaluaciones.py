@@ -83,7 +83,7 @@ def registrar_acciones_evaluaciones():
 
         try:
             empleado = Empleado.objects.get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}
@@ -194,7 +194,7 @@ def registrar_acciones_evaluaciones():
 
         try:
             evaluacion = Evaluacion.objects.get(id=evaluacion_id)
-            if not usuario.es_super_admin and evaluacion.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and evaluacion.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso.'}
         except Evaluacion.DoesNotExist:
             return {'exito': False, 'mensaje': 'Evaluacion no encontrada.'}
@@ -285,7 +285,7 @@ def registrar_acciones_evaluaciones():
                 if not evaluacion:
                     return {'exito': False, 'mensaje': 'El empleado no tiene evaluaciones.'}
 
-            if not usuario.es_super_admin and evaluacion.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and evaluacion.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso.'}
         except Evaluacion.DoesNotExist:
             return {'exito': False, 'mensaje': 'Evaluacion no encontrada.'}
@@ -373,7 +373,7 @@ def registrar_acciones_evaluaciones():
 
         try:
             empleado = Empleado.objects.get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}
@@ -444,7 +444,7 @@ def registrar_acciones_evaluaciones():
         # Filtrar privadas si no es admin/rrhh/jefe
         qs = RetroalimentacionContinua.objects.filter(empleado=empleado)
 
-        es_admin = usuario.es_super_admin or usuario.rol in ['administrador', 'rrhh']
+        es_admin = usuario.rol in ['admin', 'administrador', 'rrhh']
         es_jefe = hasattr(usuario, 'empleado') and usuario.empleado and hasattr(empleado, 'jefe_directo') and empleado.jefe_directo and usuario.empleado.id == empleado.jefe_directo.id
 
         if not (es_admin or es_jefe):
@@ -505,7 +505,7 @@ def registrar_acciones_evaluaciones():
 
         try:
             evaluacion = Evaluacion.objects.select_related('empleado').get(id=evaluacion_id)
-            if not usuario.es_super_admin and evaluacion.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and evaluacion.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso.'}
         except Evaluacion.DoesNotExist:
             return {'exito': False, 'mensaje': 'Evaluacion no encontrada.'}
@@ -566,7 +566,7 @@ def registrar_acciones_evaluaciones():
             clasificacion_potencial=''
         ).select_related('empleado', 'empleado__empresa')
 
-        if not usuario.es_super_admin:
+        if usuario.rol not in ['admin', 'administrador']:
             qs = qs.filter(empleado__empresa__in=usuario.empresas.all())
 
         if empresa_id:

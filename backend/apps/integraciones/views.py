@@ -25,7 +25,7 @@ class GoogleCalendarAuthView(APIView):
         if not empresa_id:
             return Response({'error': 'empresa_id es requerido'}, status=400)
 
-        if not request.user.es_super_admin:
+        if request.user.rol not in ['admin', 'administrador']:
             if not request.user.empresas.filter(id=empresa_id).exists():
                 return Response({'error': 'No tienes acceso a esta empresa'}, status=403)
 
@@ -56,7 +56,7 @@ class GoogleCalendarAuthorizeView(APIView):
         if not empresa_id:
             return Response({'error': 'empresa_id es requerido'}, status=400)
 
-        if not request.user.es_super_admin:
+        if request.user.rol not in ['admin', 'administrador']:
             if not request.user.empresas.filter(id=empresa_id).exists():
                 return Response({'error': 'No tienes acceso'}, status=403)
 
@@ -175,7 +175,7 @@ class GoogleCalendarDisconnectView(APIView):
         if not empresa_id:
             return Response({'error': 'empresa_id es requerido'}, status=400)
 
-        if not request.user.es_super_admin:
+        if request.user.rol not in ['admin', 'administrador']:
             if not request.user.empresas.filter(id=empresa_id).exists():
                 return Response({'error': 'No tienes acceso'}, status=403)
 

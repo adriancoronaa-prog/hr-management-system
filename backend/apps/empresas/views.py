@@ -26,14 +26,19 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
 class EmpresaListSerializer(serializers.ModelSerializer):
     """Serializer ligero para listados"""
-    total_empleados = serializers.SerializerMethodField()
-    
+    empleados_count = serializers.SerializerMethodField()
+    estado = serializers.SerializerMethodField()
+    direccion = serializers.CharField(source='direccion_completa', read_only=True)
+
     class Meta:
         model = Empresa
-        fields = ['id', 'rfc', 'razon_social', 'activa', 'total_empleados']
-    
-    def get_total_empleados(self, obj):
+        fields = ['id', 'rfc', 'razon_social', 'nombre_comercial', 'telefono', 'email', 'direccion', 'empleados_count', 'estado']
+
+    def get_empleados_count(self, obj):
         return obj.empleados.filter(estado='activo').count()
+
+    def get_estado(self, obj):
+        return 'activo' if obj.activa else 'inactivo'
 
 
 class EmpresaFilter(filters.FilterSet):
@@ -55,7 +60,7 @@ class EmpresaViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.es_super_admin:
+        if user.rol == 'admin':
             return Empresa.objects.all()
         return user.empresas.all()
     

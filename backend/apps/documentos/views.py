@@ -37,12 +37,14 @@ class CategoriaDocumentoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = super().get_queryset()
-        if not user.es_super_admin:
-            # Categorías globales + de sus empresas
+        empresa_id = self.request.headers.get('X-Empresa-ID')
+
+        if empresa_id:
             from django.db.models import Q
-            qs = qs.filter(
-                Q(empresa__isnull=True) | Q(empresa__in=user.empresas.all())
-            )
+            qs = qs.filter(Q(empresa__isnull=True) | Q(empresa_id=empresa_id))
+        elif user.rol not in ['admin', 'administrador']:
+            from django.db.models import Q
+            qs = qs.filter(Q(empresa__isnull=True) | Q(empresa__in=user.empresas.all()))
         return qs
 
 
@@ -55,8 +57,11 @@ class DocumentoEmpleadoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = super().get_queryset()
-        
-        if not user.es_super_admin:
+        empresa_id = self.request.headers.get('X-Empresa-ID')
+
+        if empresa_id:
+            qs = qs.filter(empleado__empresa_id=empresa_id)
+        elif user.rol not in ['admin', 'administrador']:
             qs = qs.filter(empleado__empresa__in=user.empresas.all())
         
         # Filtro: por_vencer

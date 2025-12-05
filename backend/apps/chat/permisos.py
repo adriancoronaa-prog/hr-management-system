@@ -29,10 +29,10 @@ def usuario_tiene_permiso(usuario, permisos_requeridos: List[str]) -> bool:
 def _verificar_permiso(usuario, permiso: str) -> bool:
     """Verifica un permiso específico"""
     if permiso == 'es_admin':
-        return usuario.is_staff or usuario.is_superuser or usuario.rol == 'administrador'
-    
+        return usuario.is_staff or usuario.is_superuser or usuario.rol in ['admin', 'administrador']
+
     if permiso == 'es_rrhh':
-        return usuario.rol in ['administrador', 'empleador']
+        return usuario.rol in ['admin', 'administrador', 'empleador', 'rrhh']
     
     if permiso == 'es_empleado':
         return hasattr(usuario, 'empleado') and usuario.empleado is not None
@@ -52,7 +52,7 @@ def validar_acceso_recurso(usuario, recurso, tipo_acceso: str = 'ver') -> bool:
     tipo_acceso: 'ver', 'editar', 'eliminar'
     """
     # Admin puede todo
-    if usuario.is_staff or usuario.is_superuser or usuario.rol == 'administrador':
+    if usuario.is_staff or usuario.is_superuser or usuario.rol in ['admin', 'administrador']:
         return True
     
     # Obtener el modelo del recurso
@@ -78,7 +78,7 @@ def _validar_acceso_empleado(usuario, empleado, tipo_acceso: str) -> bool:
             return True
     
     # Si es RRHH de la misma empresa
-    if usuario.rol == 'empleador':
+    if usuario.rol in ['empleador', 'rrhh']:
         empresas_usuario = _obtener_empresas_usuario(usuario)
         if empleado.empresa_id in empresas_usuario:
             return True
@@ -88,7 +88,7 @@ def _validar_acceso_empleado(usuario, empleado, tipo_acceso: str) -> bool:
 
 def _validar_acceso_empresa(usuario, empresa, tipo_acceso: str) -> bool:
     """Valida acceso a una empresa"""
-    if usuario.rol == 'empleador':
+    if usuario.rol in ['empleador', 'rrhh']:
         empresas_usuario = _obtener_empresas_usuario(usuario)
         return empresa.id in empresas_usuario
     
@@ -117,7 +117,7 @@ def _obtener_empresas_usuario(usuario) -> list:
     """Obtiene IDs de empresas a las que el usuario tiene acceso"""
     # Por ahora retorna todas si es admin/rrhh
     # Luego se puede refinar con una tabla de asignación
-    if usuario.rol in ['administrador', 'empleador']:
+    if usuario.rol in ['admin', 'administrador', 'empleador', 'rrhh']:
         from apps.empresas.models import Empresa
         return list(Empresa.objects.values_list('id', flat=True))
     
@@ -143,8 +143,8 @@ def obtener_subordinados(empleado, incluir_indirectos: bool = False) -> list:
 def obtener_contexto_permisos(usuario) -> dict:
     """Genera un diccionario con el contexto de permisos del usuario"""
     contexto = {
-        'es_admin': usuario.is_staff or usuario.is_superuser or usuario.rol == 'administrador',
-        'es_rrhh': usuario.rol in ['administrador', 'empleador'],
+        'es_admin': usuario.is_staff or usuario.is_superuser or usuario.rol in ['admin', 'administrador'],
+        'es_rrhh': usuario.rol in ['admin', 'administrador', 'empleador', 'rrhh'],
         'rol': usuario.rol,
         'empresas_acceso': _obtener_empresas_usuario(usuario),
     }

@@ -1,5 +1,47 @@
 from django.db import models
+from datetime import date
 from apps.core.models import BaseModel, AuditMixin
+
+
+def calcular_dias_vacaciones_lft(anios_antiguedad: int) -> int:
+    """
+    Calcula los días de vacaciones según la Ley Federal del Trabajo (reforma 2023)
+    """
+    if anios_antiguedad < 1:
+        return 0
+    elif anios_antiguedad == 1:
+        return 12
+    elif anios_antiguedad == 2:
+        return 14
+    elif anios_antiguedad == 3:
+        return 16
+    elif anios_antiguedad == 4:
+        return 18
+    elif anios_antiguedad == 5:
+        return 20
+    elif anios_antiguedad <= 10:
+        return 22
+    elif anios_antiguedad <= 15:
+        return 24
+    elif anios_antiguedad <= 20:
+        return 26
+    elif anios_antiguedad <= 25:
+        return 28
+    elif anios_antiguedad <= 30:
+        return 30
+    else:
+        return 32
+
+
+def calcular_antiguedad_anios(fecha_ingreso) -> int:
+    """Calcula los años completos de antigüedad"""
+    if not fecha_ingreso:
+        return 0
+    hoy = date.today()
+    anios = hoy.year - fecha_ingreso.year
+    if (hoy.month, hoy.day) < (fecha_ingreso.month, fecha_ingreso.day):
+        anios -= 1
+    return max(0, anios)
 
 
 class PeriodoVacacional(BaseModel):

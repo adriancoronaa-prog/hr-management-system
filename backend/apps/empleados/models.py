@@ -135,14 +135,35 @@ class Empleado(BaseModel, AuditMixin):
     @property
     def antiguedad(self):
         """Retorna diccionario con años, meses, días de antigüedad"""
-        fecha_fin = self.fecha_baja or timezone.now().date()
-        delta = relativedelta(fecha_fin, self.fecha_ingreso)
-        return {
-            'anos': delta.years,
-            'meses': delta.months,
-            'dias': delta.days,
-            'total_dias': (fecha_fin - self.fecha_ingreso).days
-        }
+        from datetime import date, datetime
+
+        # Determinar fecha fin
+        if self.fecha_baja:
+            if isinstance(self.fecha_baja, str):
+                fecha_fin = datetime.strptime(self.fecha_baja, '%Y-%m-%d').date()
+            else:
+                fecha_fin = self.fecha_baja
+        else:
+            fecha_fin = timezone.now().date()
+
+        # Asegurar que fecha_ingreso sea date
+        fecha_inicio = self.fecha_ingreso
+        if isinstance(fecha_inicio, str):
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+
+        if not fecha_inicio:
+            return {'anos': 0, 'meses': 0, 'dias': 0, 'total_dias': 0}
+
+        try:
+            delta = relativedelta(fecha_fin, fecha_inicio)
+            return {
+                'anos': delta.years,
+                'meses': delta.months,
+                'dias': delta.days,
+                'total_dias': (fecha_fin - fecha_inicio).days
+            }
+        except Exception:
+            return {'anos': 0, 'meses': 0, 'dias': 0, 'total_dias': 0}
     
     @property
     def anos_completos(self):

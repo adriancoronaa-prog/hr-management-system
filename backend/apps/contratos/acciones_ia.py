@@ -25,7 +25,7 @@ def registrar_acciones():
 
         try:
             empleado = Empleado.objects.select_related('empresa').get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}
@@ -109,7 +109,7 @@ def registrar_acciones():
             fecha_fin__gte=hoy
         ).select_related('empleado', 'empleado__empresa').order_by('fecha_fin')
 
-        if not usuario.es_super_admin:
+        if usuario.rol not in ['admin', 'administrador']:
             qs = qs.filter(empleado__empresa__in=usuario.empresas.all())
 
         if empresa_id:
@@ -211,7 +211,7 @@ def registrar_acciones():
 
         try:
             empleado = Empleado.objects.select_related('empresa').get(id=empleado_id)
-            if not usuario.es_super_admin and empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este empleado.'}
         except Empleado.DoesNotExist:
             return {'exito': False, 'mensaje': 'Empleado no encontrado.'}
@@ -300,7 +300,7 @@ def registrar_acciones():
 
         try:
             contrato = Contrato.objects.select_related('empleado', 'empleado__empresa').get(id=contrato_id)
-            if not usuario.es_super_admin and contrato.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and contrato.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este contrato.'}
         except Contrato.DoesNotExist:
             return {'exito': False, 'mensaje': 'Contrato no encontrado.'}
@@ -382,7 +382,7 @@ def registrar_acciones():
 
         try:
             contrato = Contrato.objects.select_related('empleado').get(id=contrato_id)
-            if not usuario.es_super_admin and contrato.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and contrato.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este contrato.'}
         except Contrato.DoesNotExist:
             return {'exito': False, 'mensaje': 'Contrato no encontrado.'}
@@ -466,7 +466,7 @@ def registrar_acciones():
 
         try:
             contrato = Contrato.objects.select_related('empleado', 'empleado__empresa').get(id=contrato_id)
-            if not usuario.es_super_admin and contrato.empleado.empresa not in usuario.empresas.all():
+            if usuario.rol not in ['admin', 'administrador'] and contrato.empleado.empresa not in usuario.empresas.all():
                 return {'exito': False, 'mensaje': 'No tienes acceso a este contrato.'}
         except Contrato.DoesNotExist:
             return {'exito': False, 'mensaje': 'Contrato no encontrado.'}
