@@ -157,97 +157,120 @@ export function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
       </div>
 
       {/* Selector de Empresa */}
-      <div
-        className={cn(
-          "border-b border-horizon-800",
-          collapsed ? "px-2 py-3" : "px-3 py-3"
-        )}
-      >
-        {loading ? (
+      {userRole !== "empleado" ? (
+        <div
+          className={cn(
+            "border-b border-horizon-800",
+            collapsed ? "px-2 py-3" : "px-3 py-3"
+          )}
+        >
+          {loading ? (
+            <div
+              className={cn(
+                "flex items-center gap-2 text-sm text-horizon-400",
+                collapsed ? "justify-center p-2" : "px-3 py-2.5"
+              )}
+            >
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {!collapsed && <span>Cargando...</span>}
+            </div>
+          ) : empresas.length === 0 ? (
+            <Link
+              href="/empresas/nueva"
+              className={cn(
+                "flex items-center gap-2 text-sm bg-horizon-700 hover:bg-horizon-600 rounded-lg transition-colors",
+                collapsed ? "p-2 justify-center" : "px-3 py-2.5"
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              {!collapsed && <span>Crear empresa</span>}
+            </Link>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => !collapsed && setSelectorOpen(!selectorOpen)}
+                className={cn(
+                  "flex items-center w-full text-sm bg-horizon-800 hover:bg-horizon-700 rounded-lg transition-colors",
+                  collapsed ? "p-2 justify-center" : "justify-between px-3 py-2.5"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex items-center gap-2 min-w-0",
+                    collapsed ? "" : "flex-1"
+                  )}
+                >
+                  <Building2 className="w-4 h-4 text-horizon-400 flex-shrink-0" />
+                  {!collapsed && (
+                    <span className="truncate font-medium">{empresaNombre}</span>
+                  )}
+                </div>
+                {!collapsed && empresas.length > 1 && (
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-horizon-400 flex-shrink-0 transition-transform duration-200 ml-2",
+                      selectorOpen && "rotate-180"
+                    )}
+                  />
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {!collapsed && selectorOpen && empresas.length > 1 && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setSelectorOpen(false)}
+                  />
+
+                  <div className="absolute left-0 right-0 mt-1 bg-horizon-800 rounded-lg shadow-xl border border-horizon-700 z-50 max-h-64 overflow-y-auto">
+                    {empresas.map((empresa) => (
+                      <button
+                        key={empresa.id}
+                        onClick={() => handleSelectEmpresa(empresa)}
+                        className={cn(
+                          "flex items-center justify-between w-full px-3 py-2.5 text-sm text-left transition-colors",
+                          empresaActual?.id === empresa.id
+                            ? "bg-horizon-700 text-white"
+                            : "text-horizon-200 hover:bg-horizon-700 hover:text-white"
+                        )}
+                      >
+                        <span className="truncate flex-1">
+                          {empresa.nombre_comercial || empresa.razon_social}
+                        </span>
+                        {empresaActual?.id === empresa.id && (
+                          <Check className="w-4 h-4 text-sage-400 flex-shrink-0 ml-2" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "border-b border-horizon-800",
+            collapsed ? "px-2 py-3" : "px-3 py-3"
+          )}
+        >
           <div
             className={cn(
-              "flex items-center gap-2 text-sm text-horizon-400",
-              collapsed ? "justify-center p-2" : "px-3 py-2.5"
-            )}
-          >
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {!collapsed && <span>Cargando...</span>}
-          </div>
-        ) : empresas.length === 0 ? (
-          <Link
-            href="/empresas/nueva"
-            className={cn(
-              "flex items-center gap-2 text-sm bg-horizon-700 hover:bg-horizon-600 rounded-lg transition-colors",
+              "flex items-center gap-2 text-sm bg-horizon-800 rounded-lg",
               collapsed ? "p-2 justify-center" : "px-3 py-2.5"
             )}
           >
-            <Plus className="w-4 h-4" />
-            {!collapsed && <span>Crear empresa</span>}
-          </Link>
-        ) : (
-          <div className="relative">
-            <button
-              onClick={() => !collapsed && setSelectorOpen(!selectorOpen)}
-              className={cn(
-                "flex items-center w-full text-sm bg-horizon-800 hover:bg-horizon-700 rounded-lg transition-colors",
-                collapsed ? "p-2 justify-center" : "justify-between px-3 py-2.5"
-              )}
-            >
-              <div
-                className={cn(
-                  "flex items-center gap-2 min-w-0",
-                  collapsed ? "" : "flex-1"
-                )}
-              >
-                <Building2 className="w-4 h-4 text-horizon-400 flex-shrink-0" />
-                {!collapsed && (
-                  <span className="truncate font-medium">{empresaNombre}</span>
-                )}
-              </div>
-              {!collapsed && empresas.length > 1 && (
-                <ChevronDown
-                  className={cn(
-                    "w-4 h-4 text-horizon-400 flex-shrink-0 transition-transform duration-200 ml-2",
-                    selectorOpen && "rotate-180"
-                  )}
-                />
-              )}
-            </button>
-
-            {/* Dropdown */}
-            {!collapsed && selectorOpen && empresas.length > 1 && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setSelectorOpen(false)}
-                />
-
-                <div className="absolute left-0 right-0 mt-1 bg-horizon-800 rounded-lg shadow-xl border border-horizon-700 z-50 max-h-64 overflow-y-auto">
-                  {empresas.map((empresa) => (
-                    <button
-                      key={empresa.id}
-                      onClick={() => handleSelectEmpresa(empresa)}
-                      className={cn(
-                        "flex items-center justify-between w-full px-3 py-2.5 text-sm text-left transition-colors",
-                        empresaActual?.id === empresa.id
-                          ? "bg-horizon-700 text-white"
-                          : "text-horizon-200 hover:bg-horizon-700 hover:text-white"
-                      )}
-                    >
-                      <span className="truncate flex-1">
-                        {empresa.nombre_comercial || empresa.razon_social}
-                      </span>
-                      {empresaActual?.id === empresa.id && (
-                        <Check className="w-4 h-4 text-sage-400 flex-shrink-0 ml-2" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
+            <Building2 className="w-4 h-4 text-horizon-400 flex-shrink-0" />
+            {!collapsed && (
+              <span className="text-horizon-200 truncate font-medium">
+                {empresaNombre}
+              </span>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Navegación */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
