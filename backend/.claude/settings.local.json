@@ -27,7 +27,8 @@
       "Bash(npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls \"C:\\Users\\adria\\Downloads\\Programa de RRHH - Grupo CA\\frontend\\src\\components\\ui\"\" 2>/dev/null || echo \"Directory listing... \")"
     ],
     "deny": [],
     "ask": []

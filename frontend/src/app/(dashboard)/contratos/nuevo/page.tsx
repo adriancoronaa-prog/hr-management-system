@@ -142,9 +142,6 @@ export default function NuevoContratoPage() {
         cleanData.salario_mensual = parseFloat(String(cleanData.salario_mensual));
       }
 
-      console.log("=== CREANDO CONTRATO ===");
-      console.log(JSON.stringify(cleanData, null, 2));
-
       try {
         const response = await api.post("/contratos/", cleanData);
         return response.data;

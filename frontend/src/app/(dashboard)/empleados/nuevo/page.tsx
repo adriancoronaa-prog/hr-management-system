@@ -124,18 +124,11 @@ export default function NuevoEmpleadoPage() {
         }
       });
 
-      console.log("=== ENVIANDO AL BACKEND ===");
-      console.log(JSON.stringify(cleanData, null, 2));
-
       try {
         const response = await api.post("/empleados/", cleanData);
         return response.data;
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number; data?: Record<string, string[]> } };
-        console.error("=== ERROR DEL BACKEND ===");
-        console.error("Status:", axiosError.response?.status);
-        console.error("Data:", axiosError.response?.data);
-
         // Guardar errores del backend para mostrarlos
         if (axiosError.response?.data && typeof axiosError.response.data === "object") {
           setBackendErrors(axiosError.response.data);
@@ -150,12 +143,10 @@ export default function NuevoEmpleadoPage() {
   });
 
   const onSubmit = (data: EmpleadoFormData) => {
-    console.log("Form submitted with data:", data);
     mutation.mutate(data);
   };
 
   const onError = (formErrors: typeof errors) => {
-    console.log("Form validation errors:", formErrors);
     // Encontrar la primera seccion con errores y navegar a ella
     const sectionFields: Record<SectionId, string[]> = {
       personal: ["nombre", "apellido_paterno", "apellido_materno", "fecha_nacimiento", "genero", "estado_civil"],

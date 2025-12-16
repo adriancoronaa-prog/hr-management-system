@@ -220,7 +220,7 @@ export default function DashboardPage() {
           title="Solicitudes pendientes"
           value={stats?.solicitudes_pendientes?.toString() || "0"}
           icon={<FileText className="h-5 w-5" strokeWidth={1.5} />}
-          href="/solicitudes"
+          href="/vacaciones"
           loading={isLoading}
         />
         <MetricCard

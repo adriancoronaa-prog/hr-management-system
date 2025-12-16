@@ -143,10 +143,10 @@ export const chatApi = {
   },
 
   confirmAction: async (conversationId: string, confirm: boolean) => {
-    const response = await api.post("/chat/confirmar/", {
-      conversacion_id: conversationId,
-      confirmar: confirm,
-    });
+    const response = await api.post(
+      `/chat/conversaciones/${conversationId}/confirmar_accion/`,
+      { confirmar: confirm }
+    );
     return response.data;
   },
 };
@@ -170,14 +170,6 @@ export const empleadosApi = {
 
   update: async (id: string, data: Record<string, unknown>) => {
     const response = await api.patch(`/empleados/${id}/`, data);
-    return response.data;
-  },
-};
-
-// Dashboard API
-export const dashboardApi = {
-  getMetrics: async () => {
-    const response = await api.get("/reportes/dashboard/");
     return response.data;
   },
 };

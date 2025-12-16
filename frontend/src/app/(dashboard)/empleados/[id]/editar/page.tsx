@@ -152,18 +152,11 @@ export default function EditarEmpleadoPage() {
         }
       });
 
-      console.log("=== ACTUALIZANDO EMPLEADO ===");
-      console.log(JSON.stringify(cleanData, null, 2));
-
       try {
         const response = await api.patch(`/empleados/${empleadoId}/`, cleanData);
         return response.data;
       } catch (error: unknown) {
         const axiosError = error as { response?: { status?: number; data?: Record<string, string[]> } };
-        console.error("=== ERROR DEL BACKEND ===");
-        console.error("Status:", axiosError.response?.status);
-        console.error("Data:", axiosError.response?.data);
-
         if (axiosError.response?.data && typeof axiosError.response.data === "object") {
           setBackendErrors(axiosError.response.data);
         }
@@ -178,7 +171,6 @@ export default function EditarEmpleadoPage() {
   });
 
   const onSubmit = (data: EmpleadoFormData) => {
-    console.log("Form submitted with data:", data);
     mutation.mutate(data);
   };
 
