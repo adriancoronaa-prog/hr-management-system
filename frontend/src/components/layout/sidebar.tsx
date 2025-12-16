@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import type { UserRole } from "@/components/auth/role-guard";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -25,15 +26,22 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Chat", href: "/chat", icon: MessageSquare },
-  { name: "Empresas", href: "/empresas", icon: Building2, adminOnly: true },
-  { name: "Empleados", href: "/empleados", icon: Users },
-  { name: "Nomina", href: "/nomina", icon: Receipt },
-  { name: "Contratos", href: "/contratos", icon: FileText },
-  { name: "Vacaciones", href: "/vacaciones", icon: Calendar },
-  { name: "Reportes", href: "/reportes", icon: BarChart3 },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  roles: UserRole[];
+}
+
+const navigation: NavItem[] = [
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "rrhh", "empleador", "empleado"] },
+  { name: "Chat", href: "/chat", icon: MessageSquare, roles: ["admin", "rrhh", "empleador", "empleado"] },
+  { name: "Empresas", href: "/empresas", icon: Building2, roles: ["admin"] },
+  { name: "Empleados", href: "/empleados", icon: Users, roles: ["admin", "rrhh", "empleador"] },
+  { name: "Nomina", href: "/nomina", icon: Receipt, roles: ["admin", "rrhh", "empleador"] },
+  { name: "Contratos", href: "/contratos", icon: FileText, roles: ["admin", "rrhh", "empleador"] },
+  { name: "Vacaciones", href: "/vacaciones", icon: Calendar, roles: ["admin", "rrhh", "empleador", "empleado"] },
+  { name: "Reportes", href: "/reportes", icon: BarChart3, roles: ["admin", "rrhh", "empleador"] },
 ];
 
 interface SidebarProps {
@@ -110,9 +118,9 @@ export function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
 
   if (!mounted) return null;
 
+  const userRole = (user?.rol as UserRole) || "empleado";
   const filteredNavigation = navigation.filter((item) => {
-    if (item.adminOnly && user?.rol !== "admin") return false;
-    return true;
+    return item.roles.includes(userRole);
   });
 
   const empresaNombre =

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -100,6 +101,9 @@ export default function DashboardLayout({
 
       {/* Mobile bottom navigation */}
       <MobileNav />
+
+      {/* Chat Widget Flotante */}
+      <ChatWidget />
     </div>
   );
 }

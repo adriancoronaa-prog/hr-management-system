@@ -9,10 +9,13 @@ interface ChatState {
   isLoading: boolean;
   error: string | null;
   pendingAction: ActionResponse | null;
+  isOpen: boolean;
   sendMessage: (content: string, file?: File) => Promise<void>;
   confirmAction: (confirm: boolean) => Promise<void>;
   clearMessages: () => void;
   setConversationId: (id: string | null) => void;
+  setIsOpen: (open: boolean) => void;
+  toggleOpen: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -21,6 +24,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
   error: null,
   pendingAction: null,
+  isOpen: false,
+
+  setIsOpen: (open: boolean) => set({ isOpen: open }),
+
+  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 
   sendMessage: async (content: string, file?: File) => {
     const { conversationId } = get();
