@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { RoleGuard } from "@/components/auth/role-guard";
 import api from "@/lib/api";
 import Link from "next/link";
 
@@ -69,9 +70,10 @@ export default function EmpleadosPage() {
   if (!mounted) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <RoleGuard allowedRoles={["admin", "rrhh", "empleador"]}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-display font-semibold text-warm-900">
             Empleados
@@ -189,16 +191,17 @@ export default function EmpleadosPage() {
         </div>
       )}
 
-      {/* No results from search */}
-      {!isLoading && empleados.length > 0 && filteredEmpleados.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-warm-500">
-              No se encontraron empleados con "{search}"
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {/* No results from search */}
+        {!isLoading && empleados.length > 0 && filteredEmpleados.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <p className="text-warm-500">
+                No se encontraron empleados con "{search}"
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </RoleGuard>
   );
 }

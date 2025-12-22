@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { RoleGuard } from "@/components/auth/role-guard";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Contrato } from "@/types";
@@ -113,14 +114,17 @@ export default function ContratosPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-horizon-500" />
-      </div>
+      <RoleGuard allowedRoles={["admin", "rrhh", "empleador"]}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-horizon-500" />
+        </div>
+      </RoleGuard>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={["admin", "rrhh", "empleador"]}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -408,6 +412,7 @@ export default function ContratosPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

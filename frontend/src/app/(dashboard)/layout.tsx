@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { Toaster } from "sonner";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -104,6 +105,9 @@ export default function DashboardLayout({
 
       {/* Chat Widget Flotante */}
       <ChatWidget />
+
+      {/* Toast Notifications */}
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { RoleGuard } from "@/components/auth/role-guard";
 import type { Empresa } from "@/types";
 import {
   Building2,
@@ -47,16 +48,9 @@ export default function EmpresasPage() {
     window.location.reload();
   };
 
-  if (user?.rol !== "admin") {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-warm-500">No tienes permisos para ver esta pagina</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={["admin"]}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -260,6 +254,7 @@ export default function EmpresasPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   );
 }
