@@ -1,22 +1,10 @@
 """
-Configuración de producción para Django
-Para desplegar en Railway, Render, o similar
-
+Production settings for Railway deployment.
 Uso: DJANGO_SETTINGS_MODULE=config.settings.production
 """
 import os
-import sys
-from pathlib import Path
-from datetime import timedelta
-
 import dj_database_url
-
-# Agregar el directorio backend al path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(BASE_DIR))
-
-# Importar configuración base
-from config.settings import *
+from .base import *
 
 # ========================================
 # OVERRIDE PARA PRODUCCIÓN
@@ -69,13 +57,11 @@ SECURE_HSTS_PRELOAD = True
 # ========================================
 # ARCHIVOS ESTÁTICOS (WhiteNoise)
 # ========================================
-# Insertar WhiteNoise después de SecurityMiddleware
 if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
     security_index = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
     MIDDLEWARE.insert(security_index + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ========================================
 # MEDIA FILES (S3 opcional)
@@ -125,6 +111,7 @@ CORS_ALLOW_CREDENTIALS = True
 # ========================================
 # JWT (más estricto en producción)
 # ========================================
+from datetime import timedelta
 SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] = timedelta(hours=1)
 SIMPLE_JWT['SIGNING_KEY'] = SECRET_KEY
 

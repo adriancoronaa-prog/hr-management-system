@@ -1,3 +1,6 @@
+"""
+Django base settings - usado en desarrollo y como base para producción.
+"""
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -5,6 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# BASE_DIR apunta a backend/ (3 niveles arriba desde settings/base.py)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -237,33 +241,27 @@ El sistema valida documentos fiscales mexicanos:
 # ========================================
 # EMAIL CONFIGURATION
 # ========================================
-# En desarrollo: usa console backend (muestra emails en terminal)
-# En producción: usa SMTP real
 EMAIL_BACKEND = os.getenv(
     'EMAIL_BACKEND',
     'django.core.mail.backends.console.EmailBackend'
 )
 
-# Configuración SMTP (para producción)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
-# Remitente por defecto
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'RRHH Sistema <noreply@rrhh.local>')
 
-# URL del frontend (para links en emails)
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 # ========================================
 # GOOGLE CALENDAR CONFIGURATION
 # ========================================
 import json
 
-# Cargar credenciales desde archivo JSON de Google
-GOOGLE_CREDENTIALS_FILE = BASE_DIR / 'backend' / 'client_secret_470031425940-dfhf98q2qdn4ud5v0q8td7vo7d9poabt.apps.googleusercontent.com.json'
+GOOGLE_CREDENTIALS_FILE = BASE_DIR / 'client_secret_470031425940-dfhf98q2qdn4ud5v0q8td7vo7d9poabt.apps.googleusercontent.com.json'
 
 if GOOGLE_CREDENTIALS_FILE.exists():
     with open(GOOGLE_CREDENTIALS_FILE) as f:
@@ -279,3 +277,8 @@ GOOGLE_REDIRECT_URI = os.getenv(
     'GOOGLE_REDIRECT_URI',
     'http://localhost:8000/api/integraciones/google/callback/'
 )
+
+# ========================================
+# ANTHROPIC API
+# ========================================
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
