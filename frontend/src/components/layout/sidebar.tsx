@@ -10,7 +10,6 @@ import api from "@/lib/api";
 import type { UserRole } from "@/components/auth/role-guard";
 import {
   LayoutDashboard,
-  MessageSquare,
   Users,
   Building2,
   FileText,
@@ -35,7 +34,6 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "rrhh", "empleador", "empleado"] },
-  { name: "Chat", href: "/chat", icon: MessageSquare, roles: ["admin", "rrhh", "empleador", "empleado"] },
   { name: "Empresas", href: "/empresas", icon: Building2, roles: ["admin"] },
   { name: "Empleados", href: "/empleados", icon: Users, roles: ["admin", "rrhh", "empleador"] },
   { name: "Nomina", href: "/nomina", icon: Receipt, roles: ["admin", "rrhh", "empleador"] },
