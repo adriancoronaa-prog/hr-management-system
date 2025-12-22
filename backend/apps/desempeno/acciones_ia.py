@@ -3,7 +3,7 @@ Acciones de IA para el módulo de Desempeño y KPIs
 """
 from typing import Dict
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 
 def registrar_acciones():

@@ -13,8 +13,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChatContainer } from "@/components/chat/chat-container";
 import { useAuthStore } from "@/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -240,42 +238,22 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Main content grid */}
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Quick actions */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Acciones rapidas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {quickActions.map((action) => (
-              <ActionButton
-                key={action.href}
-                title={action.title}
-                href={action.href}
-                icon={action.icon}
-              />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Chat section */}
-        <Card className="lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Asistente IA</CardTitle>
-            <Link href="/chat">
-              <Button variant="ghost" size="sm">
-                Abrir chat completo
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-[400px]">
-              <ChatContainer compact />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Quick actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Acciones rapidas</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-3">
+          {quickActions.map((action) => (
+            <ActionButton
+              key={action.href}
+              title={action.title}
+              href={action.href}
+              icon={action.icon}
+            />
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

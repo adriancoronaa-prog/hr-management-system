@@ -55,7 +55,7 @@ class DashboardEmpresaSerializer(serializers.Serializer):
 
 
 class InfoEmpleadoSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()  # UUID as string
     nombre_completo = serializers.CharField()
     curp = serializers.CharField(allow_null=True)
     rfc = serializers.CharField(allow_null=True)

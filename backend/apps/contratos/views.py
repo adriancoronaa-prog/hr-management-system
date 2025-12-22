@@ -175,6 +175,23 @@ class ContratoViewSet(viewsets.ModelViewSet):
         return Response(ContratoSerializer(contrato, context={'request': request}).data)
 
     @action(detail=False, methods=['get'])
+    def por_vencer(self, request):
+        """Obtiene contratos por vencer en los proximos 30 dias"""
+        qs = self.get_queryset()
+        dias = int(request.query_params.get('dias', 30))
+        fecha_limite = timezone.now().date() + timedelta(days=dias)
+
+        contratos = qs.filter(
+            estado='vigente',
+            fecha_fin__isnull=False,
+            fecha_fin__lte=fecha_limite,
+            fecha_fin__gte=timezone.now().date()
+        )
+
+        serializer = ContratoListSerializer(contratos, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
     def resumen(self, request):
         """Obtiene resumen de contratos"""
         qs = self.get_queryset()
