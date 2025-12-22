@@ -149,22 +149,27 @@ class PeriodoNominaViewSet(EmpresaFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def resumen(self, request, pk=None):
         """
-        Obtiene resumen del periodo
+        Obtiene resumen del periodo con lista de recibos
         """
         periodo = self.get_object()
-        
+
+        # Obtener recibos del periodo
+        recibos = periodo.recibos.select_related('empleado').order_by('empleado__nombre')
+        recibos_data = ReciboNominaSerializer(recibos, many=True).data
+
         return Response({
             'periodo': str(periodo),
             'estado': periodo.estado,
-            'total_empleados': periodo.total_empleados,
-            'total_percepciones': float(periodo.total_percepciones),
-            'total_deducciones': float(periodo.total_deducciones),
-            'total_neto': float(periodo.total_neto),
+            'total_empleados': periodo.total_empleados or recibos.count(),
+            'total_percepciones': float(periodo.total_percepciones or 0),
+            'total_deducciones': float(periodo.total_deducciones or 0),
+            'total_neto': float(periodo.total_neto or 0),
             'recibos_por_estado': {
                 'borrador': periodo.recibos.filter(estado='borrador').count(),
                 'calculado': periodo.recibos.filter(estado='calculado').count(),
                 'timbrado': periodo.recibos.filter(estado='timbrado').count(),
-            }
+            },
+            'recibos': recibos_data,
         })
 
 
@@ -233,25 +238,57 @@ class ReciboNominaViewSet(EmpleadoFilterMixin, viewsets.ModelViewSet):
         Timbra el recibo con el PAC configurado
         """
         recibo = self.get_object()
-        
+
         # Solo admin puede timbrar
         if request.user.rol not in ['admin', 'administrador']:
             return Response(
                 {'error': 'No tienes permiso para timbrar recibos'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         if recibo.estado != 'calculado':
             return Response(
                 {'error': 'El recibo debe estar calculado para timbrarse'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # TODO: Implementar timbrado con PAC
         return Response({
             'mensaje': 'Timbrado pendiente de configurar PAC',
             'recibo_id': recibo.id
         })
+
+    @action(detail=False, methods=['get'])
+    def mis_recibos(self, request):
+        """
+        Obtiene los recibos del empleado autenticado
+        Usado por la vista MyPayslips del frontend
+        """
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response(
+                {'error': 'No autenticado'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Si el usuario es empleado, filtrar por su empleado asociado
+        if hasattr(user, 'empleado') and user.empleado:
+            qs = ReciboNomina.objects.filter(
+                empleado=user.empleado
+            ).select_related(
+                'periodo', 'periodo__empresa', 'empleado'
+            ).order_by('-periodo__año', '-periodo__numero_periodo')
+
+            serializer = self.get_serializer(qs, many=True)
+            return Response(serializer.data)
+
+        # Si no es empleado pero tiene rol de empleado sin registro
+        if user.rol == 'empleado':
+            return Response([])
+
+        # Para otros roles, retornar vacío (deberían usar list con filtros)
+        return Response([])
 
 
 class IncidenciaNominaViewSet(EmpresaFilterMixin, viewsets.ModelViewSet):
