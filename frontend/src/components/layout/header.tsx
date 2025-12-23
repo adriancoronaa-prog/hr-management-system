@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Menu, Bell, LogOut, User } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -71,6 +72,13 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
                 </span>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/perfil" className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                Mi Perfil
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}

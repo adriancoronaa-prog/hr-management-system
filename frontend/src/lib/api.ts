@@ -365,4 +365,31 @@ export const contratosApi = {
   },
 };
 
+// Usuarios/Perfil API
+export const usuariosApi = {
+  getPerfil: async () => {
+    const response = await api.get("/usuarios/perfil/");
+    return response.data;
+  },
+
+  actualizarPerfil: async (data: {
+    first_name?: string;
+    last_name?: string;
+    notificaciones_email?: boolean;
+    notificaciones_push?: boolean;
+    tema_oscuro?: boolean;
+  }) => {
+    const response = await api.patch("/usuarios/perfil/actualizar/", data);
+    return response.data;
+  },
+
+  cambiarPassword: async (data: {
+    password_actual: string;
+    password_nuevo: string;
+  }) => {
+    const response = await api.post("/usuarios/cambiar-password/", data);
+    return response.data;
+  },
+};
+
 export default api;
