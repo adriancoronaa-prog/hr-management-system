@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Menu, Bell, LogOut, User } from "lucide-react";
+import { Menu, LogOut, User } from "lucide-react";
+import { NotificationsDropdown } from "./notifications-dropdown";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -50,11 +51,7 @@ export function Header({ title = "Dashboard", onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-2">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" strokeWidth={1.5} />
-          {/* Notification indicator */}
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-error" />
-        </Button>
+        <NotificationsDropdown />
 
         {/* User dropdown */}
         <DropdownMenu>

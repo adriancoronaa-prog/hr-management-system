@@ -392,4 +392,27 @@ export const usuariosApi = {
   },
 };
 
+// Notificaciones API
+export const notificacionesApi = {
+  getRecientes: async () => {
+    const response = await api.get("/notificaciones/recientes/");
+    return response.data;
+  },
+
+  getNoLeidasCount: async (): Promise<{ count: number }> => {
+    const response = await api.get("/notificaciones/no_leidas/");
+    return response.data;
+  },
+
+  marcarLeida: async (id: string) => {
+    const response = await api.post(`/notificaciones/${id}/marcar_leida/`);
+    return response.data;
+  },
+
+  marcarTodasLeidas: async () => {
+    const response = await api.post("/notificaciones/marcar_todas_leidas/");
+    return response.data;
+  },
+};
+
 export default api;
