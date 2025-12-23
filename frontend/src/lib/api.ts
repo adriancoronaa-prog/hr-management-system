@@ -1,4 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type {
+  PlanPrestaciones,
+  PrestacionAdicional,
+  CatalogoResponse,
+  ReferenciaLey,
+} from "@/types/prestaciones";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -388,6 +394,46 @@ export const usuariosApi = {
     password_nuevo: string;
   }) => {
     const response = await api.post("/usuarios/cambiar-password/", data);
+    return response.data;
+  },
+};
+
+// Prestaciones API
+export const prestacionesApi = {
+  // Planes
+  getPlanes: async (): Promise<PlanPrestaciones[]> => {
+    const response = await api.get("/prestaciones/planes/");
+    return response.data.results || response.data;
+  },
+
+  getPlan: async (id: string): Promise<PlanPrestaciones> => {
+    const response = await api.get(`/prestaciones/planes/${id}/`);
+    return response.data;
+  },
+
+  // Prestaciones adicionales
+  getAdicionales: async (planId?: string): Promise<PrestacionAdicional[]> => {
+    const params = planId ? { plan: planId } : {};
+    const response = await api.get("/prestaciones/adicionales/", { params });
+    return response.data.results || response.data;
+  },
+
+  // Catálogo
+  getCatalogo: async (): Promise<CatalogoResponse> => {
+    const response = await api.get("/prestaciones/adicionales/catalogo/");
+    return response.data;
+  },
+
+  getPorCategoria: async (categoria: string) => {
+    const response = await api.get("/prestaciones/adicionales/por_categoria/", {
+      params: { categoria },
+    });
+    return response.data;
+  },
+
+  // Referencia de ley
+  getReferenciaLey: async (): Promise<ReferenciaLey> => {
+    const response = await api.get("/prestaciones/planes/referencia_ley/");
     return response.data;
   },
 };
