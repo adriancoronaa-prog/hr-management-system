@@ -5,6 +5,13 @@ import type {
   CatalogoResponse,
   ReferenciaLey,
 } from "@/types/prestaciones";
+import type {
+  AsignacionKPI,
+  ResumenKPIs,
+  Evaluacion,
+  Retroalimentacion,
+  Matriz9Box,
+} from "@/types/desempeno";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -458,6 +465,54 @@ export const notificacionesApi = {
   marcarTodasLeidas: async () => {
     const response = await api.post("/notificaciones/marcar_todas_leidas/");
     return response.data;
+  },
+};
+
+// Desempeño API
+export const desempenoApi = {
+  // Mis KPIs
+  getMisKPIs: async (): Promise<AsignacionKPI[]> => {
+    const response = await api.get("/desempeno/mis-kpis/");
+    return response.data.results || response.data;
+  },
+
+  getMisKPIsActivos: async (): Promise<AsignacionKPI[]> => {
+    const response = await api.get("/desempeno/mis-kpis/activos/");
+    return response.data;
+  },
+
+  getResumenKPIs: async (): Promise<ResumenKPIs> => {
+    const response = await api.get("/desempeno/mis-kpis/resumen/");
+    return response.data;
+  },
+
+  // KPIs del equipo (para jefes)
+  getKPIsEquipo: async (): Promise<AsignacionKPI[]> => {
+    const response = await api.get("/desempeno/equipo-kpis/");
+    return response.data.results || response.data;
+  },
+
+  // Evaluaciones
+  getEvaluaciones: async (empleadoId?: string): Promise<Evaluacion[]> => {
+    const params = empleadoId ? { empleado: empleadoId } : {};
+    const response = await api.get("/desempeno/evaluaciones/", { params });
+    return response.data.results || response.data;
+  },
+
+  getMisEvaluaciones: async (): Promise<Evaluacion[]> => {
+    const response = await api.get("/desempeno/evaluaciones/mis_evaluaciones/");
+    return response.data;
+  },
+
+  getMatriz9Box: async (): Promise<Matriz9Box> => {
+    const response = await api.get("/desempeno/evaluaciones/matriz_9box/");
+    return response.data;
+  },
+
+  // Retroalimentación
+  getRetroalimentacion: async (): Promise<Retroalimentacion[]> => {
+    const response = await api.get("/desempeno/retroalimentacion/");
+    return response.data.results || response.data;
   },
 };
 

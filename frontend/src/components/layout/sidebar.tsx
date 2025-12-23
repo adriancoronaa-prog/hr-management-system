@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Gift,
+  Target,
 } from "lucide-react";
 
 interface NavItem {
@@ -41,6 +42,7 @@ const navigation: NavItem[] = [
   { name: "Contratos", href: "/contratos", icon: FileText, roles: ["admin", "rrhh", "empleador"] },
   { name: "Vacaciones", href: "/vacaciones", icon: Calendar, roles: ["admin", "rrhh", "empleador", "empleado"] },
   { name: "Prestaciones", href: "/prestaciones", icon: Gift, roles: ["admin", "rrhh", "empleador", "empleado"] },
+  { name: "Desempeno", href: "/desempeno", icon: Target, roles: ["admin", "rrhh", "empleador", "empleado"] },
   { name: "Reportes", href: "/reportes", icon: BarChart3, roles: ["admin", "rrhh", "empleador"] },
 ];
 
